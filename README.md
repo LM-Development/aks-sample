@@ -1,3 +1,4 @@
+[![Board Status](https://dev.azure.com/lmtfs/71b42cc5-26da-44bd-a6e1-e4334a0beb71/59cfe59e-7833-42b7-b5c6-8a39874fd483/_apis/work/boardbadge/9a59bfef-68b6-40e3-a91a-973c9f87cc53)](https://dev.azure.com/lmtfs/71b42cc5-26da-44bd-a6e1-e4334a0beb71/_boards/board/t/59cfe59e-7833-42b7-b5c6-8a39874fd483/Microsoft.RequirementCategory)
 # Microsoft Graph Communications API and Samples
 
 The Microsoft Graph Communications API allows developers to programmatically interact with Microsoft's Communications Platform, which also powers Microsoft Teams, to create amazing experiences and products. Check out our samples in this repo to understand the capabilities of these APIs.
