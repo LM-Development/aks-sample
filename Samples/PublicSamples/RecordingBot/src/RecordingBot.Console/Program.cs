@@ -81,7 +81,10 @@ namespace RecordingBot.Console
         /// <param name="e">The e.</param>
         private static void InnerExceptionHandler(Exception e)
         {
-            if (e == null) return; // return to the caller method
+            if (e == null) 
+            {
+                return; // return to the caller method
+            }
             System.Console.WriteLine(e.Message);
             // Call recursively to output all inner exception messages
             InnerExceptionHandler(e.InnerException);

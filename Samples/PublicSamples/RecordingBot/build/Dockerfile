@@ -13,7 +13,6 @@ WORKDIR /src/RecordingBot.Console
 RUN msbuild /p:Configuration=Release /p:OutputPath=C:\app /p:Platform=x64
 
 
-
 FROM mcr.microsoft.com/windows:1809
 SHELL ["powershell", "-Command"]
 
