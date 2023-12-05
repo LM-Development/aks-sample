@@ -27,7 +27,6 @@
 		<PackageReference Include="SharpZipLib">
 			<Version>1.4.2</Version>
 		</PackageReference>
-		<Reference Include="System.Data.Entity" />
 		<PackageReference Include="DotNetEnv">
 			<Version>2.5.0</Version>
 		</PackageReference>
