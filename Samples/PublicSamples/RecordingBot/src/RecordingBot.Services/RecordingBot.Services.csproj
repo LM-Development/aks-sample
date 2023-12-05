@@ -7,21 +7,12 @@
 		<Platforms>x64</Platforms>
 		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
+	
 	<PropertyGroup>
 		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
 		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
 	</PropertyGroup>
-	<ItemGroup>
-		<Reference Include="Microsoft.Skype.Internal.Media.H264">
-			<HintPath>..\packages\microsoft.skype.bots.media\1.19.0.25-alpha\src\skype_media_lib\Microsoft.Skype.Internal.Media.H264.dll</HintPath>
-		</Reference>
-		<Reference Include="System.Data.Entity" />
-		<Reference Include="System.Runtime.Serialization" />
-	</ItemGroup>
-	<ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
-		<Reference Include="System" />
-		<Reference Include="System.Data" />
-	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="Azure.Messaging.EventGrid" Version="4.21.0" />
 		<PackageReference Include="Microsoft.AspNet.WebApi.Core" Version="5.3.0" />
@@ -44,11 +35,7 @@
 			<Version>1.2.0.7270</Version>
 		</PackageReference>
 	</ItemGroup>
-	<ItemGroup>
-		<Content Include="..\packages\microsoft.skype.bots.media\1.19.0.25-alpha\src\skype_media_lib\*">
-			<Visible>false</Visible>
-		</Content>
-	</ItemGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\RecordingBot.Model\RecordingBot.Model.csproj" />
 	</ItemGroup>
