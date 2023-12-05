@@ -19,12 +19,13 @@
 using Microsoft.Graph.Communications.Client.Authentication;
 using Microsoft.Graph.Communications.Common;
 using Microsoft.Graph.Communications.Common.Telemetry;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using RecordingBot.Model.Constants;
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -41,21 +42,6 @@ namespace RecordingBot.Services.Authentication
     public class AuthenticationProvider : ObjectRoot, IRequestAuthenticationProvider
     {
         /// <summary>
-        /// The application name.
-        /// </summary>
-        private readonly string appName;
-
-        /// <summary>
-        /// The application identifier.
-        /// </summary>
-        private readonly string appId;
-
-        /// <summary>
-        /// The application secret.
-        /// </summary>
-        private readonly string appSecret;
-
-        /// <summary>
         /// The open ID configuration refresh interval.
         /// </summary>
         private readonly TimeSpan openIdConfigRefreshInterval = TimeSpan.FromHours(2);
@@ -69,6 +55,8 @@ namespace RecordingBot.Services.Authentication
         /// The open identifier configuration.
         /// </summary>
         private OpenIdConnectConfiguration openIdConfiguration;
+        private readonly ConfidentialClientApplicationOptions _clientOptions;
+        private static readonly IEnumerable<string> _defaultScopes = new List<string> { "https://graph.microsoft.com/.default" };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthenticationProvider" /> class.
@@ -80,9 +68,12 @@ namespace RecordingBot.Services.Authentication
         public AuthenticationProvider(string appName, string appId, string appSecret, IGraphLogger logger)
             : base(logger.NotNull(nameof(logger)).CreateShim(nameof(AuthenticationProvider)))
         {
-            this.appName = appName.NotNullOrWhitespace(nameof(appName));
-            this.appId = appId.NotNullOrWhitespace(nameof(appId));
-            this.appSecret = appSecret.NotNullOrWhitespace(nameof(appSecret));
+            _clientOptions = new ConfidentialClientApplicationOptions
+            {
+                ClientName = appName.NotNullOrWhitespace(nameof(appName)),
+                ClientId = appId.NotNullOrWhitespace(nameof(appId)),
+                ClientSecret = appSecret.NotNullOrWhitespace(nameof(appSecret))
+            };
         }
 
         /// <summary>
@@ -98,27 +89,23 @@ namespace RecordingBot.Services.Authentication
         public async Task AuthenticateOutboundRequestAsync(HttpRequestMessage request, string tenant)
         {
             const string schema = "Bearer";
-            const string replaceString = "{tenant}";
-            const string oauthV2TokenLink = "https://login.microsoftonline.com/{tenant}";
-            const string resource = "https://graph.microsoft.com";
 
             // If no tenant was specified, we craft the token link using the common tenant.
             // https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-v2-protocols#endpoints
             tenant = string.IsNullOrWhiteSpace(tenant) ? "common" : tenant;
-            var tokenLink = oauthV2TokenLink.Replace(replaceString, tenant);
 
             this.GraphLogger.Info("AuthenticationProvider: Generating OAuth token.");
-            var context = new AuthenticationContext(tokenLink);
-            var creds = new ClientCredential(this.appId, this.appSecret);
+
+            var clientApp = ConfidentialClientApplicationBuilder.CreateWithApplicationOptions(_clientOptions).WithTenantId(tenant).Build();
 
             AuthenticationResult result;
             try
             {
-                result = await this.AcquireTokenWithRetryAsync(context, resource, creds, attempts: 3).ConfigureAwait(false);
+                result = await this.AcquireTokenWithRetryAsync(clientApp, attempts: 3);
             }
             catch (Exception ex)
             {
-                this.GraphLogger.Error(ex, $"Failed to generate token for client: {this.appId}");
+                this.GraphLogger.Error(ex, $"Failed to generate token for client: {_clientOptions.ClientId}");
                 throw;
             }
 
@@ -173,7 +160,7 @@ namespace RecordingBot.Services.Authentication
             TokenValidationParameters validationParameters = new TokenValidationParameters
             {
                 ValidIssuers = authIssuers,
-                ValidAudience = this.appId,
+                ValidAudience = _clientOptions.ClientId,
                 IssuerSigningKeys = this.openIdConfiguration.SigningKeys,
             };
 
@@ -194,7 +181,7 @@ namespace RecordingBot.Services.Authentication
             catch (Exception ex)
             {
                 // Some other error
-                this.GraphLogger.Error(ex, $"Failed to validate token for client: {this.appId}.");
+                this.GraphLogger.Error(ex, $"Failed to validate token for client: {_clientOptions.ClientId}.");
                 return new RequestValidationResult() { IsValid = false };
             }
 
@@ -219,7 +206,7 @@ namespace RecordingBot.Services.Authentication
         /// <param name="creds">The application credentials.</param>
         /// <param name="attempts">The attempts.</param>
         /// <returns>The <see cref="AuthenticationResult" />.</returns>
-        private async Task<AuthenticationResult> AcquireTokenWithRetryAsync(AuthenticationContext context, string resource, ClientCredential creds, int attempts)
+        private async Task<AuthenticationResult> AcquireTokenWithRetryAsync(IConfidentialClientApplication context, int attempts)
         {
             while (true)
             {
@@ -227,7 +214,7 @@ namespace RecordingBot.Services.Authentication
 
                 try
                 {
-                    return await context.AcquireTokenAsync(resource, creds).ConfigureAwait(false);
+                    return await context.AcquireTokenForClient(_defaultScopes).ExecuteAsync();
                 }
                 catch (Exception)
                 {
@@ -237,7 +224,7 @@ namespace RecordingBot.Services.Authentication
                     }
                 }
 
-                await Task.Delay(1000).ConfigureAwait(false);
+                await Task.Delay(1000);
             }
         }
     }
