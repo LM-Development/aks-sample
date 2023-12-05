@@ -173,6 +173,7 @@ namespace RecordingBot.Services.ServiceSetup
         /// <value>The wav quality.</value>
         public int WAVQuality { get; set; }
 
+        public X509Certificate2 Certificate { get; private set; }
 
         /// <summary>
         /// Initializes this instance.
@@ -206,6 +207,7 @@ namespace RecordingBot.Services.ServiceSetup
 
             this.CallControlListeningUrls = controlListenUris;
 
+            Certificate = GetCertificateFromStore();
             this.MediaPlatformSettings = new MediaPlatformSettings()
             {
                 MediaPlatformInstanceSettings = new MediaPlatformInstanceSettings()
