@@ -1,0 +1,58 @@
+name: main
+
+on:
+  push:
+    branches:
+      - main
+      - testrelease
+
+jobs:
+  build-push-cr:
+    runs-on: windows-2022
+
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      #- name: Read application version
+      #  shell: bash
+      #  run: |
+      #    echo "APP_VERSION=$(cat deploy/teams-recording-bot/Chart.yaml | sed -n "s/^appVersion: \([0-9\.]*\)$/\1/p")" >> $GITHUB_ENV
+
+      #- name: Check for existing docker image
+      #  shell: bash
+      #  run: |
+      #    GHCR_TOKEN=$(echo ${{ secrets.CR_PAT }} | base64)
+      #    tags=$(curl -sH "Authorization: Bearer ${GHCR_TOKEN}" https://ghcr.io/v2/nucleiai/microsoft-teams-recording/teams-recording-bot/tags/list | jq -r 'try .tags[]')
+      #    if [[ ${tags[*]} =~ ${APP_VERSION} ]]; 
+      #    then
+      #      echo "Image tag ${tags[*]} already exists in registry"
+      #      echo "IMAGE_EXISTS=true" >> $GITHUB_ENV
+      #    else
+      #      echo "Image tag ${tags[*]} doesn't exist in registry."
+      #    fi
+      #    echo Done checking.
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        #if: env.IMAGE_EXISTS != 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Build and Tag docker image
+        #if: env.IMAGE_EXISTS != 'true'
+        shell: bash
+        run: |
+          docker build -f ./build/Dockerfile . -t ${{ vars.CR_NAMESPACE_REPOSITORY }}:latest
+
+      - name: Push docker image to CR
+        #if: env.IMAGE_EXISTS != 'true'
+        shell: bash
+        run: |
+          docker push ${{ vars.CR_NAMESPACE_REPOSITORY }}:latest
