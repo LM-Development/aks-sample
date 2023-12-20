@@ -11,11 +11,11 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Microsoft.AspNetCore.Http;
 using Microsoft.Skype.Bots.Media;
 using RecordingBot.Model.Constants;
 using RecordingBot.Services.Contract;
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
@@ -29,12 +29,6 @@ namespace RecordingBot.Services.ServiceSetup
     /// <seealso cref="RecordingBot.Services.Contract.IAzureSettings" />
     public class AzureSettings : IAzureSettings
     {
-        /// <summary>
-        /// Gets or sets the name of the bot.
-        /// </summary>
-        /// <value>The name of the bot.</value>
-        public string BotName { get; set; }
-
         /// <summary>
         /// Gets or sets the name of the service DNS.
         /// </summary>
@@ -52,12 +46,6 @@ namespace RecordingBot.Services.ServiceSetup
         /// </summary>
         /// <value>The certificate thumbprint.</value>
         public string CertificateThumbprint { get; set; }
-
-        /// <summary>
-        /// Gets or sets the call control listening urls.
-        /// </summary>
-        /// <value>The call control listening urls.</value>
-        public IEnumerable<string> CallControlListeningUrls { get; set; }
 
         /// <summary>
         /// Gets or sets the call control base URL.
@@ -173,6 +161,9 @@ namespace RecordingBot.Services.ServiceSetup
         /// <value>The wav quality.</value>
         public int WAVQuality { get; set; }
 
+        public PathString PodPathBase { get; private set; }
+        public X509Certificate2 Certificate { get; private set; }
+
         /// <summary>
         /// Initializes this instance.
         /// </summary>
@@ -183,9 +174,8 @@ namespace RecordingBot.Services.ServiceSetup
                 ServiceCname = ServiceDnsName;
             }
 
-            X509Certificate2 defaultCertificate = GetCertificateFromStore();
+            Certificate = GetCertificateFromStore();
 
-            var baseDomain = "+";
             int podNumber = 0;
 
             if (!string.IsNullOrEmpty(PodName))
@@ -194,20 +184,18 @@ namespace RecordingBot.Services.ServiceSetup
             }
 
             // Create structured config objects for service.
+#if DEBUG
+            CallControlBaseUrl = new Uri($"https://{ServiceCname}:{CallSignalingPort}/{podNumber}/{HttpRouteConstants.CallSignalingRoutePrefix}/{HttpRouteConstants.OnNotificationRequestRoute}");
+#else
             CallControlBaseUrl = new Uri($"https://{ServiceCname}/{podNumber}/{HttpRouteConstants.CallSignalingRoutePrefix}/{HttpRouteConstants.OnNotificationRequestRoute}");
+#endif
+            PodPathBase = $"/{podNumber}";
 
-            List<string> controlListenUris = new List<string>();
-            controlListenUris.Add($"https://{baseDomain}:{CallSignalingPort}/");
-            controlListenUris.Add($"https://{baseDomain}:{CallSignalingPort}/{podNumber}/");
-            controlListenUris.Add($"http://{baseDomain}:{CallSignalingPort + 1}/"); // required for AKS pod graceful termination
-
-            CallControlListeningUrls = controlListenUris;
-
-            MediaPlatformSettings = new MediaPlatformSettings()
+            MediaPlatformSettings = new MediaPlatformSettings
             {
-                MediaPlatformInstanceSettings = new MediaPlatformInstanceSettings()
+                MediaPlatformInstanceSettings = new MediaPlatformInstanceSettings
                 {
-                    CertificateThumbprint = defaultCertificate.Thumbprint,
+                    CertificateThumbprint = Certificate.Thumbprint,
                     InstanceInternalPort = InstanceInternalPort,
                     InstancePublicIPAddress = IPAddress.Any,
                     InstancePublicPort = InstancePublicPort + podNumber,
@@ -219,7 +207,7 @@ namespace RecordingBot.Services.ServiceSetup
             // Initialize Audio Settings
             AudioSettings = new AudioSettings
             {
-                WavSettings = (WAVSampleRate > 0) ? new WAVSettings(WAVSampleRate, WAVQuality): null
+                WavSettings = (WAVSampleRate > 0) ? new WAVSettings(WAVSampleRate, WAVQuality) : null
             };
         }
 
@@ -234,7 +222,7 @@ namespace RecordingBot.Services.ServiceSetup
             store.Open(OpenFlags.ReadOnly);
             try
             {
-                X509Certificate2Collection certs = store.Certificates.Find(X509FindType.FindByThumbprint, CertificateThumbprint, validOnly: false);
+                var certs = store.Certificates.Find(X509FindType.FindByThumbprint, CertificateThumbprint, validOnly: false);
 
                 if (certs.Count != 1)
                 {
