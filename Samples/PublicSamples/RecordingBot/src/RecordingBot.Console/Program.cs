@@ -46,8 +46,7 @@ namespace RecordingBot.Console
             {
                 System.Console.WriteLine("RecordingBot: booting");
 
-                bot.Boot();
-                bot.StartServer();
+                bot.Boot(args);
 
                 System.Console.WriteLine("RecordingBot: running");
             }
