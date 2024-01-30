@@ -13,7 +13,6 @@
 // ***********************************************************************
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -22,8 +21,6 @@ using Microsoft.Graph.Communications.Common.Telemetry;
 using RecordingBot.Model.Constants;
 using RecordingBot.Services.Contract;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Net;
 using System.Text.Encodings.Web;
 using System.Text.Json;

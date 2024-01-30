@@ -102,7 +102,7 @@ namespace RecordingBot.Services.Http.Controllers
             }
             catch (Exception e)
             {
-                _logger.Error(e, $"Received HTTP {this.Request.Method}, {this.Request.GetUri()}");
+                _logger.Error(e, $"Received HTTP {Request.Method}, {Request.GetUri()}");
                 return StatusCode(500, e.ToString());
             }
         }

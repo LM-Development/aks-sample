@@ -102,14 +102,14 @@ namespace RecordingBot.Services.Authentication
             try
             {
                 using var httpClient = new HttpClient();
-                var result = await httpClient.PostAsync(tokenLink, new FormUrlEncodedContent(new[]
+                var result = await httpClient.PostAsync(tokenLink, new FormUrlEncodedContent(new Dictionary<string, string>
                 {
-                    new KeyValuePair<string, string>("grant_type", "password"),
-                    new KeyValuePair<string, string>("username", userName),
-                    new KeyValuePair<string, string>("password", password),
-                    new KeyValuePair<string, string>("scope", Resource),
-                    new KeyValuePair<string, string>("client_id", appId),
-                    new KeyValuePair<string, string>("client_secret", appSecret),
+                    ["grant_type"] = "password",
+                    ["username"] = userName,
+                    ["password"] = password,
+                    ["scope"] = Resource,
+                    ["client_id"] = appId,
+                    ["client_secret"] = appSecret,
                 })).ConfigureAwait(false);
 
                 if (!result.IsSuccessStatusCode)

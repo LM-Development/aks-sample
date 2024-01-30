@@ -11,7 +11,6 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Microsoft.Graph;
 using Microsoft.Graph.Communications.Calls;
 using Microsoft.Graph.Communications.Calls.Media;
 using Microsoft.Graph.Communications.Client;
@@ -53,25 +52,24 @@ namespace RecordingBot.Services.Bot
         /// The settings
         /// </summary>
         private readonly AzureSettings _settings;
-
-        /// <summary>
-        /// Gets the collection of call handlers.
-        /// </summary>
-        /// <value>The call handlers.</value>
         public ConcurrentDictionary<string, CallHandler> CallHandlers { get; } = new ConcurrentDictionary<string, CallHandler>();
 
         /// <summary>
         /// Gets the entry point for stateful bot.
         /// </summary>
         /// <value>The client.</value>
-        public ICommunicationsClient Client { get; private set; }
-
-        /// <inheritdoc />
-        public void Dispose()
+        public ICommunicationsClient Client
         {
-            Client?.Dispose();
-            Client = null;
+            get
+            {
+                if (_client == null)
+                {
+                    InitializeClient();
+                }
+                return _client;
+            }
         }
+        private ICommunicationsClient _client;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BotService" /> class.
@@ -86,24 +84,16 @@ namespace RecordingBot.Services.Bot
             _settings = (AzureSettings)settings;
         }
 
-        /// <summary>
-        /// Initialize the instance.
-        /// </summary>
+        public void Dispose()
+        {
+            _client?.Dispose();
+            _client = null;
+        }
+
         public void Initialize()
         {
-            var name = GetType().Assembly.GetName().Name;
-            var builder = new CommunicationsClientBuilder(name, _settings.AadAppId, _logger);
-
-            var authProvider = new AuthenticationProvider(name, _settings.AadAppId, _settings.AadAppSecret, _logger);
-
-            builder.SetAuthenticationProvider(authProvider);
-            builder.SetNotificationUrl(_settings.CallControlBaseUrl);
-            builder.SetMediaPlatformSettings(_settings.MediaPlatformSettings);
-            builder.SetServiceBaseUrl(_settings.PlaceCallEndpointUrl);
-
-            Client = builder.Build();
-            Client.Calls().OnIncoming += CallsOnIncoming;
-            Client.Calls().OnUpdated += CallsOnUpdated;
+            InitializeClient();
+            RegisterCallEventHandlers();
         }
 
         /// <summary>
@@ -121,7 +111,7 @@ namespace RecordingBot.Services.Bot
             {
                 // Manually remove the call from SDK state.
                 // This will trigger the ICallCollection.OnUpdated event with the removed resource.
-                Client.Calls().TryForceRemove(callLegId, out ICall _);
+                _client.Calls().TryForceRemove(callLegId, out ICall _);
             }
         }
 
@@ -134,9 +124,7 @@ namespace RecordingBot.Services.Bot
         {
             // A tracking id for logging purposes. Helps identify this call in logs.
             var scenarioId = Guid.NewGuid();
-
             var (chatInfo, meetingInfo) = JoinInfo.ParseJoinURL(joinCallBody.JoinURL);
-
             var tenantId = (meetingInfo as OrganizerMeetingInfo).Organizer.GetPrimaryIdentity().GetTenantId();
             var mediaSession = CreateLocalMediaSession();
 
@@ -157,9 +145,24 @@ namespace RecordingBot.Services.Bot
                     DisplayName = joinCallBody.DisplayName,
                 };
             }
-            var statefulCall = await Client.Calls().AddAsync(joinParams, scenarioId).ConfigureAwait(false);
+
+            var statefulCall = await _client.Calls().AddAsync(joinParams, scenarioId).ConfigureAwait(false);
             statefulCall.GraphLogger.Info($"Call creation complete: {statefulCall.Id}");
             return statefulCall;
+        }
+
+        private void InitializeClient()
+        {
+            var name = GetType().Assembly.GetName().Name;
+            var builder = new CommunicationsClientBuilder(name, _settings.AadAppId, _logger);
+            var authProvider = new AuthenticationProvider(name, _settings.AadAppId, _settings.AadAppSecret, _logger);
+
+            builder.SetAuthenticationProvider(authProvider);
+            builder.SetNotificationUrl(_settings.CallControlBaseUrl);
+            builder.SetMediaPlatformSettings(_settings.MediaPlatformSettings);
+            builder.SetServiceBaseUrl(_settings.PlaceCallEndpointUrl);
+
+            _client = builder.Build();
         }
 
         /// <summary>
@@ -173,7 +176,7 @@ namespace RecordingBot.Services.Bot
             try
             {
                 // create media session object, this is needed to establish call connections
-                return Client.CreateMediaSession(
+                return _client.CreateMediaSession(
                     new AudioSocketSettings
                     {
                         StreamDirections = StreamDirection.Recvonly,
@@ -194,6 +197,12 @@ namespace RecordingBot.Services.Bot
             }
         }
 
+        private void RegisterCallEventHandlers()
+        {
+            _client.Calls().OnIncoming += CallsOnIncoming;
+            _client.Calls().OnUpdated += CallsOnUpdated;
+        }
+
         /// <summary>
         /// Incoming call handler.
         /// </summary>
@@ -203,36 +212,7 @@ namespace RecordingBot.Services.Bot
         {
             args.AddedResources.ForEach(call =>
             {
-                // Get the policy recording parameters.
-
-                // The context associated with the incoming call.
-                IncomingContext incomingContext = call.Resource.IncomingContext;
-
-                // The RP participant.
-                string observedParticipantId = incomingContext.ObservedParticipantId;
-
-                // If the observed participant is a delegate.
-                IdentitySet onBehalfOfIdentity = incomingContext.OnBehalfOf;
-
-                // If a transfer occured, the transferor.
-                IdentitySet transferorIdentity = incomingContext.Transferor;
-
-                string countryCode = null;
-                EndpointType? endpointType = null;
-
-                // Note: this should always be true for CR calls.
-                if (incomingContext.ObservedParticipantId == incomingContext.SourceParticipantId)
-                {
-                    // The dynamic location of the RP.
-                    countryCode = call.Resource.Source.CountryCode;
-
-                    // The type of endpoint being used.
-                    endpointType = call.Resource.Source.EndpointType;
-                }
-
-                IMediaSession mediaSession = Guid.TryParse(call.Id, out Guid callId) ? CreateLocalMediaSession(callId) : CreateLocalMediaSession();
-
-                // Answer call
+                var mediaSession = Guid.TryParse(call.Id, out Guid callId) ? CreateLocalMediaSession(callId) : CreateLocalMediaSession();
                 call?.AnswerAsync(mediaSession).ForgetAndLogExceptionAsync(call.GraphLogger, $"Answering call {call.Id} with scenario {call.ScenarioId}.");
             });
         }

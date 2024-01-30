@@ -34,7 +34,7 @@ namespace RecordingBot.Services.Media
         /// <summary>
         /// The writers
         /// </summary>
-        readonly Dictionary<string, WaveFileWriter> _writers = new Dictionary<string, WaveFileWriter>();
+        readonly Dictionary<string, WaveFileWriter> _writers = [];
 
         /// <summary>
         /// The processor identifier
@@ -130,7 +130,7 @@ namespace RecordingBot.Services.Media
         public async Task<string> Finalise()
         {
             //drain the un-processed buffers on this object
-            while (Buffer.Count > 0)
+            while (_buffer.Count > 0)
             {
                 await Task.Delay(200);
             }

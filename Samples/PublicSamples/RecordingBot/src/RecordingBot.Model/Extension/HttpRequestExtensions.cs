@@ -9,9 +9,7 @@ namespace RecordingBot.Model.Extension
     public static class HttpRequestExtensions
     {
         private const string UnknownHostName = "UNKNOWN-HOST";
-
         private const string MultipleHostName = "MULTIPLE-HOST";
-
         private const string Comma = ",";
 
         //
@@ -26,9 +24,9 @@ namespace RecordingBot.Model.Extension
         //     A New Uri object representing request Uri.
         public static Uri GetUri(this HttpRequest request)
         {
-            if (request == null)
+            if (request is null)
             {
-                throw new ArgumentNullException("request");
+                throw new ArgumentNullException(nameof(request));
             }
 
             if (string.IsNullOrWhiteSpace(request.Scheme))
@@ -36,14 +34,18 @@ namespace RecordingBot.Model.Extension
                 throw new ArgumentException("Http request Scheme is not specified");
             }
 
-            return new Uri(request.Scheme 
-                + "://" 
-                + ((!request.Host.HasValue) 
-                ? UnknownHostName 
-                : ((request.Host.Value.IndexOf(Comma, StringComparison.Ordinal) > 0) ? MultipleHostName : request.Host.Value)) 
-                + (request.PathBase.HasValue ? request.PathBase.Value : string.Empty) 
-                + (request.Path.HasValue ? request.Path.Value : string.Empty) 
-                + (request.QueryString.HasValue ? request.QueryString.Value : string.Empty));
+            string hostValue = request.Host.HasValue ? request.Host.Value : UnknownHostName;
+            if (hostValue.IndexOf(Comma, StringComparison.Ordinal) > 0)
+            {
+                hostValue = MultipleHostName;
+            }
+
+            string pathBaseValue = request.PathBase.HasValue ? request.PathBase.Value : string.Empty;
+            string pathValue = request.Path.HasValue ? request.Path.Value : string.Empty;
+            string queryStringValue = request.QueryString.HasValue ? request.QueryString.Value : string.Empty;
+
+            string uriString = $"{request.Scheme}://{hostValue}{pathBaseValue}{pathValue}{queryStringValue}";
+            return new Uri(uriString);
         }
     }
 }

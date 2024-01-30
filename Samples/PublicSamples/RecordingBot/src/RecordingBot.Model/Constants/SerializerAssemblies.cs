@@ -29,7 +29,7 @@ namespace RecordingBot.Model.Constants
                     _assemblies = _assemblies.Where(assembly => assembly != null);
                     foreach (Assembly item in _assemblies)
                     {
-                        if (!hashSet.Contains(item))
+                        if (item != null && !hashSet.Contains(item))
                         {
                             list.Add(item);
                             hashSet.Add(item);

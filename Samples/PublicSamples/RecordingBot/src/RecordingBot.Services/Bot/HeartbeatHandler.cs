@@ -28,7 +28,7 @@ namespace RecordingBot.Services.Bot
         /// <summary>
         /// The heartbeat timer
         /// </summary>
-        private Timer heartbeatTimer;
+        private readonly Timer heartbeatTimer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HeartbeatHandler" /> class.
@@ -39,13 +39,12 @@ namespace RecordingBot.Services.Bot
             : base(logger)
         {
             // initialize the timer
-            var timer = new Timer(frequency.TotalMilliseconds)
+            heartbeatTimer = new Timer(frequency.TotalMilliseconds)
             {
                 Enabled = true,
                 AutoReset = true
             };
-            timer.Elapsed += HeartbeatDetected;
-            heartbeatTimer = timer;
+            heartbeatTimer.Elapsed += HeartbeatDetected;
         }
 
         /// <summary>
@@ -69,11 +68,18 @@ namespace RecordingBot.Services.Bot
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="args">The elapsed event args.</param>
-        private void HeartbeatDetected(object sender, ElapsedEventArgs args)
+        private async void HeartbeatDetected(object sender, ElapsedEventArgs args)
         {
             var task = $"{GetType().FullName}.{nameof(HeartbeatAsync)}(args)";
-            GraphLogger.Verbose($"Starting running task: " + task);
-            _ = Task.Run(() => HeartbeatAsync(args)).ForgetAndLogExceptionAsync(GraphLogger, task);
+            GraphLogger.Verbose($"Starting running task: {task}");
+            try
+            {
+                await HeartbeatAsync(args);
+            }
+            catch (Exception ex)
+            {
+                GraphLogger.Error(ex, $"Error in task: {task}");
+            }
         }
     }
 }

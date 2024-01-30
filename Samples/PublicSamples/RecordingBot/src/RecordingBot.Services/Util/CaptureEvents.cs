@@ -12,7 +12,6 @@
 // <summary></summary>
 // ***********************************************************************
 using Microsoft.Graph.Communications.Calls;
-using Microsoft.Graph.Communications.Common;
 using Microsoft.Graph.Communications.Resources;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
@@ -22,6 +21,7 @@ using RecordingBot.Services.Media;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -34,155 +34,100 @@ namespace RecordingBot.Services.Util
     /// <seealso cref="RecordingBot.Services.Util.BufferBase{System.Object}" />
     public class CaptureEvents : BufferBase<object>
     {
-        /// <summary>
-        /// The path
-        /// </summary>
         private readonly string _path;
-        /// <summary>
-        /// The serializer
-        /// </summary>
         private readonly JsonSerializer _serializer;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CaptureEvents" /> class.
-
-        /// </summary>
-        /// <param name="path">The path.</param>
         public CaptureEvents(string path)
         {
             _path = path;
             _serializer = new JsonSerializer();
         }
 
-        /// <summary>
-        /// Saves the json file.
-        /// </summary>
-        /// <param name="data">The data.</param>
-        /// <param name="fileName">Name of the file.</param>
-        private async Task saveJsonFile(Object data, string fileName)
+        private async Task SaveFile<T>(T data, string fileName)
         {
             Directory.CreateDirectory(_path);
 
-            var name = fileName;
-            var fullName = Path.Combine(_path, name);
+            var fullName = Path.Combine(_path, fileName);
 
-            using var stream = File.Open(fullName, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-            using var sw = new StreamWriter(stream);
-            using var jw = new JsonTextWriter(sw);
-            jw.Formatting = Formatting.Indented;
-            _serializer.Serialize(jw, data);
-            await jw.FlushAsync();
-        }
-
-        /// <summary>
-        /// Saves the bson file.
-        /// </summary>
-        /// <param name="data">The data.</param>
-        /// <param name="fileName">Name of the file.</param>
-        private async Task saveBsonFile(Object data, string fileName)
-        {
-            Directory.CreateDirectory(_path);
-
-            var name = fileName;
-            var fullName = Path.Combine(_path, name);
-
-            var file = new FileStream(fullName, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-
-            using var bson = new BsonDataWriter(file);
-            _serializer.Serialize(bson, data);
-            await bson.FlushAsync();
-        }
-
-        /// <summary>
-        /// Saves the quality of experience data.
-        /// </summary>
-        /// <param name="data">The data.</param>
-        private async Task _saveQualityOfExperienceData(SerializableAudioQualityOfExperienceData data)
-        {
-            await saveJsonFile(data, $"{data.Id}-AudioQoE.json");
-        }
-
-        /// <summary>
-        /// Saves the audio media buffer.
-        /// </summary>
-        /// <param name="data">The data.</param>
-        private async Task _saveAudioMediaBuffer(SerializableAudioMediaBuffer data)
-        {
-            await saveBsonFile(data, data.Timestamp.ToString());
-        }
-
-        /// <summary>
-        /// Saves the participant event.
-        /// </summary>
-        /// <param name="data">The data.</param>
-        private async Task _saveParticipantEvent(CollectionEventArgs<IParticipant> data)
-        {
-            var added = new List<IParticipant>();
-            data.AddedResources.ForEach(x => added.Add(new ParticipantExtension(x)));
-
-            var removed = new List<IParticipant>();
-            data.RemovedResources.ForEach(x => removed.Add(new ParticipantExtension(x)));
-
-            var participant = new ParticipantData { AddedResources = added, RemovedResources = removed };
-
-            await saveJsonFile(participant, $"{DateTime.UtcNow.Ticks}-participant.json");
-        }
-
-        /// <summary>
-        /// Saves the requests.
-        /// </summary>
-        /// <param name="data">The data.</param>
-        private async Task _saveRequests(string data)
-        {
-            Directory.CreateDirectory(_path);
-
-            var name = DateTime.UtcNow.Ticks.ToString();
-            var fullName = Path.Combine(_path, name);
-
-            byte[] encodedText = Encoding.Unicode.GetBytes(data);
-
-            using (FileStream sourceStream = new($"{fullName}.json", FileMode.Append, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true))
+            using (var stream = File.CreateText(fullName))
+            using (var writer = new JsonTextWriter(stream))
             {
-                await sourceStream.WriteAsync(encodedText, 0, encodedText.Length);
-            };
+                writer.Formatting = Formatting.Indented;
+                _serializer.Serialize(writer, data);
+                await writer.FlushAsync();
+            }
         }
 
-        /// <summary>
-        /// Processes the specified data.
-        /// </summary>
-        /// <param name="data">The data.</param>
-        /// <returns>Task.</returns>
+        private async Task SaveBsonFile(object data, string fileName)
+        {
+            Directory.CreateDirectory(_path);
+
+            var fullName = Path.Combine(_path, fileName);
+
+            using (var file = File.Create(fullName))
+            using (var writer = new BsonDataWriter(file))
+            {
+                _serializer.Serialize(writer, data);
+                await writer.FlushAsync();
+            }
+        }
+
+        private async Task SaveQualityOfExperienceData(SerializableAudioQualityOfExperienceData data)
+        {
+            await SaveFile(data, $"{data.Id}-AudioQoE.json");
+        }
+
+        private async Task SaveAudioMediaBuffer(SerializableAudioMediaBuffer data)
+        {
+            await SaveBsonFile(data, data.Timestamp.ToString());
+        }
+
+        private async Task SaveParticipantEvent(CollectionEventArgs<IParticipant> data)
+        {
+            var participantData = new ParticipantData
+            {
+                AddedResources = new List<IParticipant>(data.AddedResources.Select(p => new ParticipantExtension(p))),
+                RemovedResources = new List<IParticipant>(data.RemovedResources.Select(p => new ParticipantExtension(p)))
+            };
+
+            await SaveFile(participantData, $"{DateTime.UtcNow.Ticks}-participant.json");
+        }
+
+        private async Task SaveRequests(string data)
+        {
+            Directory.CreateDirectory(_path);
+
+            var fullName = Path.Combine(_path, $"{DateTime.UtcNow.Ticks}.json");
+
+            await File.AppendAllTextAsync(fullName, data, Encoding.Unicode);
+        }
+
         protected override async Task Process(object data)
         {
             switch (data)
             {
                 case string d:
-                    await _saveRequests(d);
-                    return;
+                    await SaveRequests(d);
+                    break;
                 case CollectionEventArgs<IParticipant> d:
-                    await _saveParticipantEvent(d);
-                    return;
+                    await SaveParticipantEvent(d);
+                    break;
                 case SerializableAudioMediaBuffer d:
-                    await _saveAudioMediaBuffer(d);
-                    return;
+                    await SaveAudioMediaBuffer(d);
+                    break;
                 case SerializableAudioQualityOfExperienceData q:
-                    await _saveQualityOfExperienceData(q);
-                    return;
-                default:
-                    return;
+                    await SaveQualityOfExperienceData(q);
+                    break;
             }
         }
 
-        /// <summary>
-        /// Finalises this instance.
-        /// </summary>
-        public async Task Finalise()
+        public async Task Finalize()
         {
-            // drain the un-processed buffers on this object
-            while (Buffer.Count > 0)
+            while (_buffer.Count > 0)
             {
                 await Task.Delay(200);
             }
+
             await End();
         }
     }

@@ -11,7 +11,6 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-using Microsoft.Graph;
 using Microsoft.Graph.Contracts;
 using Microsoft.Graph.Models;
 using RecordingBot.Model.Models;
@@ -41,7 +40,7 @@ namespace RecordingBot.Services.Util
         {
             if (string.IsNullOrEmpty(joinURL))
             {
-                throw new ArgumentException($"Join URL cannot be null or empty: {joinURL}", nameof(joinURL));
+                throw new ArgumentException("Join URL cannot be null or empty", nameof(joinURL));
             }
 
             var decodedURL = WebUtility.UrlDecode(joinURL);
@@ -75,8 +74,8 @@ namespace RecordingBot.Services.Util
             {
                 Organizer = new IdentitySet
                 {
-                    User = new Identity { Id = ctxt.Oid },
-                },
+                    User = new Identity { Id = ctxt.Oid }
+                }
             };
             meetingInfo.Organizer.User.SetTenantId(ctxt.Tid);
 

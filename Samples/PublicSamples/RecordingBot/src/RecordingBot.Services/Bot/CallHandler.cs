@@ -12,7 +12,6 @@
 // <summary></summary>
 // ***********************************************************************>
 
-using Microsoft.Graph;
 using Microsoft.Graph.Communications.Calls;
 using Microsoft.Graph.Communications.Calls.Media;
 using Microsoft.Graph.Communications.Common.Telemetry;
@@ -25,6 +24,7 @@ using RecordingBot.Services.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 
@@ -64,7 +64,7 @@ namespace RecordingBot.Services.Bot
         /// <summary>
         /// The capture
         /// </summary>
-        private CaptureEvents _capture;
+        private readonly CaptureEvents _capture;
 
         /// <summary>
         /// The is disposed
@@ -147,9 +147,7 @@ namespace RecordingBot.Services.Bot
                     _eventPublisher.Publish("CallRecordingFlip", $"Call.Id: {Call.Id} status changed to {status}");
 
                     // NOTE: if your implementation supports stopping the recording during the call, you can call the same method above with RecordingStatus.NotRecording
-                    await source
-                        .UpdateRecordingStatusAsync(newStatus)
-                        .ConfigureAwait(false);
+                    await source.UpdateRecordingStatusAsync(newStatus).ConfigureAwait(false);
 
                     recordingStatusIndex = recordingIndex;
                 }
@@ -183,7 +181,7 @@ namespace RecordingBot.Services.Bot
                 }
             }
 
-            if ((e.OldResource.State == CallState.Established) && (e.NewResource.State == CallState.Terminated))
+            if (e.OldResource.State == CallState.Established && e.NewResource.State == CallState.Terminated)
             {
                 if (BotMediaStream != null)
                 {
@@ -197,7 +195,7 @@ namespace RecordingBot.Services.Bot
                 }
 
                 if (_settings.CaptureEvents)
-                    await _capture?.Finalise();
+                    await _capture?.Finalize();
             }
         }
 
@@ -207,12 +205,19 @@ namespace RecordingBot.Services.Bot
         /// <param name="participantId">The participant identifier.</param>
         /// <param name="participantDisplayName">Display name of the participant.</param>
         /// <returns>System.String.</returns>
-        private string createParticipantUpdateJson(string participantId, string participantDisplayName = "")
+        private static string CreateParticipantUpdateJson(string participantId, string participantDisplayName = "")
         {
-            if (participantDisplayName.Length == 0)
-                return "{" + string.Format($"\"Id\": \"{participantId}\"") + "}";
-            else
-                return "{" + string.Format($"\"Id\": \"{participantId}\", \"DisplayName\": \"{participantDisplayName}\"") + "}";
+            var sb = new StringBuilder();
+            sb.Append('{');
+            sb.AppendFormat("\"Id\": \"{0}\"", participantId);
+
+            if (!string.IsNullOrEmpty(participantDisplayName))
+            {
+                sb.AppendFormat(", \"DisplayName\": \"{0}\"", participantDisplayName);
+            }
+            sb.Append('}');
+
+            return sb.ToString();
         }
 
         /// <summary>
@@ -223,13 +228,14 @@ namespace RecordingBot.Services.Bot
         /// <param name="added">if set to <c>true</c> [added].</param>
         /// <param name="participantDisplayName">Display name of the participant.</param>
         /// <returns>System.String.</returns>
-        private string updateParticipant(List<IParticipant> participants, IParticipant participant, bool added, string participantDisplayName = "")
+        private static string UpdateParticipant(List<IParticipant> participants, IParticipant participant, bool added, string participantDisplayName = "")
         {
             if (added)
                 participants.Add(participant);
             else
                 participants.Remove(participant);
-            return createParticipantUpdateJson(participant.Id, participantDisplayName);
+
+            return CreateParticipantUpdateJson(participant.Id, participantDisplayName);
         }
 
         /// <summary>
@@ -237,7 +243,7 @@ namespace RecordingBot.Services.Bot
         /// </summary>
         /// <param name="eventArgs">The event arguments.</param>
         /// <param name="added">if set to <c>true</c> [added].</param>
-        private void updateParticipants(ICollection<IParticipant> eventArgs, bool added = true)
+        private void UpdateParticipants(ICollection<IParticipant> eventArgs, bool added = true)
         {
             foreach (var participant in eventArgs)
             {
@@ -249,13 +255,13 @@ namespace RecordingBot.Services.Bot
 
                 if (participantDetails != null)
                 {
-                    json = updateParticipant(this.BotMediaStream.participants, participant, added, participantDetails.DisplayName);
+                    json = UpdateParticipant(BotMediaStream.participants, participant, added, participantDetails.DisplayName);
                 }
                 else if (participant.Resource.Info.Identity.AdditionalData?.Count > 0)
                 {
                     if (CheckParticipantIsUsable(participant))
                     {
-                        json = updateParticipant(this.BotMediaStream.participants, participant, added);
+                        json = UpdateParticipant(BotMediaStream.participants, participant, added);
                     }
                 }
 
@@ -278,8 +284,8 @@ namespace RecordingBot.Services.Bot
             {
                 _capture?.Append(args);
             }
-            updateParticipants(args.AddedResources);
-            updateParticipants(args.RemovedResources, false);
+            UpdateParticipants(args.AddedResources);
+            UpdateParticipants(args.RemovedResources, false);
         }
 
         /// <summary>
@@ -287,7 +293,7 @@ namespace RecordingBot.Services.Bot
         /// </summary>
         /// <param name="p">The p.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private bool CheckParticipantIsUsable(IParticipant p)
+        private static bool CheckParticipantIsUsable(IParticipant p)
         {
             foreach (var i in p.Resource.Info.Identity.AdditionalData)
                 if (i.Key != "applicationInstance" && i.Value is Identity)

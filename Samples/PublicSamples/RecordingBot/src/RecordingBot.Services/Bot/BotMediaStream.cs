@@ -81,18 +81,14 @@ namespace RecordingBot.Services.Bot
             ArgumentVerifier.ThrowOnNullArgument(logger, nameof(logger));
             ArgumentVerifier.ThrowOnNullArgument(settings, nameof(settings));
 
-            participants = new List<IParticipant>();
+            participants = [];
 
             _eventPublisher = eventPublisher;
             _callId = callId;
             _mediaStream = new MediaStream(settings, logger, mediaSession.MediaSessionId.ToString());
 
             // Subscribe to the audio media.
-            _audioSocket = mediaSession.AudioSocket;
-            if (_audioSocket == null)
-            {
-                throw new InvalidOperationException("A mediaSession needs to have at least an audioSocket");
-            }
+            _audioSocket = mediaSession.AudioSocket ?? throw new InvalidOperationException("A mediaSession needs to have at least an audioSocket");
 
             _audioSocket.AudioMediaReceived += OnAudioMediaReceived;
         }

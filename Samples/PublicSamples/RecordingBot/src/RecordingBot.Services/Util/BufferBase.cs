@@ -25,138 +25,96 @@ namespace RecordingBot.Services.Util
     /// <typeparam name="T"></typeparam>
     public abstract class BufferBase<T>
     {
-        /// <summary>
-        /// The buffer
-        /// </summary>
-        protected BufferBlock<T> Buffer;
-        /// <summary>
-        /// The token source
-        /// </summary>
-        protected CancellationTokenSource TokenSource;
-        /// <summary>
-        /// The is running
-        /// </summary>
-        protected bool IsRunning = false;
-        /// <summary>
-        /// The synchronize lock
-        /// </summary>
+        protected readonly BufferBlock<T> _buffer;
+        private readonly CancellationTokenSource _tokenSource;
+        private bool _isRunning;
         private readonly SemaphoreSlim _syncLock = new(1);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BufferBase{T}" /> class.
-
-        /// </summary>
         protected BufferBase()
         {
-
+            _buffer = new BufferBlock<T>();
+            _tokenSource = new CancellationTokenSource();
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BufferBase{T}" /> class.
-        /// </summary>
-        /// <param name="token">The token.</param>
         protected BufferBase(CancellationTokenSource token)
         {
-            TokenSource = token;
+            _buffer = new BufferBlock<T>();
+            _tokenSource = token;
         }
 
-        /// <summary>
-        /// Appends the specified object.
-        /// </summary>
-        /// <param name="obj">The object.</param>
         public async Task Append(T obj)
         {
-            if (!IsRunning)
+            if (!_isRunning)
             {
-                await _start();
+                await Start();
             }
 
             try
             {
-                await Buffer.SendAsync(obj, TokenSource.Token).ConfigureAwait(false);
+                await _buffer.SendAsync(obj, _tokenSource.Token).ConfigureAwait(false);
             }
             catch (TaskCanceledException e)
             {
-                Buffer?.Complete();
+                _buffer?.Complete();
 
                 Debug.Write($"Cannot enqueue because queuing operation has been cancelled. Exception: {e}");
             }
         }
 
-        /// <summary>
-        /// Starts this instance.
-        /// </summary>
-        private async Task _start()
+        private async Task Start()
         {
             await _syncLock.WaitAsync().ConfigureAwait(false);
-            if (!IsRunning)
+            if (!_isRunning)
             {
-                TokenSource ??= new CancellationTokenSource();
-
-                Buffer = new BufferBlock<T>(new DataflowBlockOptions { CancellationToken = TokenSource.Token });
-                await Task.Factory.StartNew(_process).ConfigureAwait(false);
-                IsRunning = true;
+                await Task.Factory.StartNew(Process).ConfigureAwait(false);
+                _isRunning = true;
             }
             _syncLock.Release();
         }
 
-        /// <summary>
-        /// Ends this instance.
-        /// </summary>
         public virtual async Task End()
-        {  
-            if (IsRunning)
+        {
+            if (_isRunning)
             {
                 await _syncLock.WaitAsync().ConfigureAwait(false);
-                if (IsRunning)
+                if (_isRunning)
                 {
-                    Buffer.Complete();
-                    TokenSource = null;
-                    IsRunning = false;
+                    _buffer.Complete();
+                    _isRunning = false;
                 }
                 _syncLock.Release();
             }
         }
 
-        /// <summary>
-        /// Processes this instance.
-        /// </summary>
-        private async Task _process()
+        private async Task Process()
         {
             try
             {
-                while (await Buffer.OutputAvailableAsync(TokenSource.Token).ConfigureAwait(false))
+                while (await _buffer.OutputAvailableAsync(_tokenSource.Token).ConfigureAwait(false))
                 {
-                    T data = await Buffer.ReceiveAsync(TokenSource.Token).ConfigureAwait(false);
+                    T data = await _buffer.ReceiveAsync(_tokenSource.Token).ConfigureAwait(false);
 
                     await Task.Run(() => Process(data)).ConfigureAwait(false);
 
-                    TokenSource.Token.ThrowIfCancellationRequested();
+                    _tokenSource.Token.ThrowIfCancellationRequested();
                 }
             }
             catch (TaskCanceledException ex)
             {
-                Debug.Write(string.Format("The queue processing task has been cancelled. Exception: {0}", ex));
+                Debug.Write($"The queue processing task has been cancelled. Exception: {ex}");
             }
             catch (ObjectDisposedException ex)
             {
-                Debug.Write(string.Format("The queue processing task object has been disposed. Exception: {0}", ex));
+                Debug.Write($"The queue processing task object has been disposed. Exception: {ex}");
             }
             catch (Exception ex)
             {
-                // Catch all other exceptions and log
-                Debug.Write(string.Format("Caught Exception: {0}", ex));
+                Debug.Write($"Caught Exception: {ex}");
 
-                // Continue processing elements in the queue
-                await _process().ConfigureAwait(false);
+                await Process().ConfigureAwait(false);
             }
         }
 
-        /// <summary>
-        /// Processes the specified data.
-        /// </summary>
-        /// <param name="data">The data.</param>
-        /// <returns>Task.</returns>
         protected abstract Task Process(T data);
     }
 }

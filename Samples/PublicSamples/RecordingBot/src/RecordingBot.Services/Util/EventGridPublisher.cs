@@ -18,11 +18,9 @@ using RecordingBot.Model.Models;
 using RecordingBot.Services.Contract;
 using RecordingBot.Services.ServiceSetup;
 using System;
-using System.Collections.Generic;
 
 namespace RecordingBot.Services.Util
 {
-
     /// <summary>
     /// Class EventGridPublisher.
     /// Implements the <see cref="RecordingBot.Services.Contract.IEventPublisher" />
@@ -30,78 +28,47 @@ namespace RecordingBot.Services.Util
     /// <seealso cref="RecordingBot.Services.Contract.IEventPublisher" />
     public class EventGridPublisher : IEventPublisher
     {
-        /// <summary>
-        /// The topic name
-        /// </summary>
-        string topicName = "recordingbotevents";
-        /// <summary>
-        /// The region name
-        /// </summary>
-        string regionName = string.Empty;
-        /// <summary>
-        /// The topic key
-        /// </summary>
-        string topicKey = string.Empty;
+        private readonly string topicName;
+        private readonly string regionName;
+        private readonly string topicKey;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EventGridPublisher" /> class.
-
-        /// </summary>
-        /// <param name="settings">The settings.</param>
         public EventGridPublisher(AzureSettings settings)
         {
-            topicName = settings.TopicName;
+            topicName = settings.TopicName ?? "recordingbotevents";
             topicKey = settings.TopicKey;
             regionName = settings.RegionName;
         }
 
-        /// <summary>
-        /// Publishes the specified subject.
-        /// </summary>
-        /// <param name="Subject">The subject.</param>
-        /// <param name="Message">The message.</param>
-        /// <param name="TopicName">Name of the topic.</param>
-        public void Publish(string Subject, string Message, string TopicName)
+        public void Publish(string subject, string message, string topicName)
         {
-            if (TopicName.Length == 0)
-                TopicName = topicName;
+            topicName ??= this.topicName;
 
-            var topicEndpoint = String.Format(BotConstants.topicEndpoint, TopicName, regionName); 
+            var topicEndpoint = string.Format(BotConstants.topicEndpoint, topicName, regionName);
 
-            if (topicKey?.Length > 0)
-            { 
+            if (!string.IsNullOrEmpty(topicKey))
+            {
                 var client = new EventGridPublisherClient(new Uri(topicEndpoint), new AzureKeyCredential(topicKey));
 
-                // Add event to list
-                var eventsList = new List<EventGridEvent>();
-                ListAddEvent(eventsList, Subject, Message);
+                var eventGrid = new EventGridEvent(subject, "RecordingBot.BotEventData", "2.0", new BotEventData { Message = message })
+                {
+                    EventTime = DateTime.Now
+                };
 
-                // Publish
-                client.SendEventsAsync(eventsList).GetAwaiter().GetResult();
-                if (Subject.StartsWith("CallTerminated"))
-                    Console.WriteLine($"Publish to {TopicName} subject {Subject} message {Message}");
+                client.SendEvent(eventGrid);
+
+                if (subject.StartsWith("CallTerminated"))
+                {
+                    Console.WriteLine($"Publish to {topicName} subject {subject} message {message}");
+                }
                 else
-                    Console.WriteLine($"Publish to {TopicName} subject {Subject}");
+                {
+                    Console.WriteLine($"Publish to {topicName} subject {subject}");
+                }
             }
             else
-                Console.WriteLine($"Skipped publishing {Subject} events to Event Grid topic {TopicName} - No topic key specified");
-        }
-
-        /// <summary>
-        /// Lists the add event.
-        /// </summary>
-        /// <param name="eventsList">The events list.</param>
-        /// <param name="Subject">The subject.</param>
-        /// <param name="Message">The message.</param>
-        /// <param name="DataVersion">The data version.</param>
-        static void ListAddEvent(List<EventGridEvent> eventsList, string Subject, string Message, string DataVersion = "2.0")
-        {
-            var eventGrid = new EventGridEvent(Subject, "RecordingBot.BotEventData", DataVersion, new BotEventData() { Message = Message })
             {
-                EventTime = DateTime.Now
-            };
-
-            eventsList.Add(eventGrid);
+                Console.WriteLine($"Skipped publishing {subject} events to Event Grid topic {topicName} - No topic key specified");
+            }
         }
     }
 }

@@ -21,6 +21,8 @@ using RecordingBot.Model.Constants;
 using RecordingBot.Model.Extension;
 using RecordingBot.Services.Contract;
 using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace RecordingBot.Services.Http.Controllers
@@ -65,8 +67,8 @@ namespace RecordingBot.Services.Http.Controllers
 
             RequestValidationResult result;
 
-                var httpRequestMessage = new System.Net.Http.HttpRequestMessage();
-                httpRequestMessage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Request.Headers.Authorization);
+                var httpRequestMessage = new HttpRequestMessage();
+                httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Request.Headers.Authorization);
                 // Autenticate the incoming request.
                 result = await _commsClient.AuthenticationProvider
                     .ValidateInboundRequestAsync(httpRequestMessage)

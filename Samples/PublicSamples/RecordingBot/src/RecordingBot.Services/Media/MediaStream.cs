@@ -35,52 +35,21 @@ namespace RecordingBot.Services.Media
     /// <seealso cref="RecordingBot.Services.Contract.IMediaStream" />
     public class MediaStream : IMediaStream
     {
-        /// <summary>
-        /// The buffer
-        /// </summary>
-        private BufferBlock<SerializableAudioMediaBuffer> _buffer;
-        /// <summary>
-        /// The token source
-        /// </summary>
-        private CancellationTokenSource _tokenSource;
-        /// <summary>
-        /// The is the indicator if the media stream is running
-        /// </summary>
+        private readonly BufferBlock<SerializableAudioMediaBuffer> _buffer;
+        private readonly CancellationTokenSource _tokenSource;
         private bool _isRunning = false;
-        /// <summary>
-        /// The is draining indicator
-        /// </summary>
         protected bool _isDraining;
 
-        /// <summary>
-        /// The synchronize lock
-        /// </summary>
         private readonly SemaphoreSlim _syncLock = new(1);
-        /// <summary>
-        /// The media identifier
-        /// </summary>
         private readonly string _mediaId;
-        /// <summary>
-        /// The settings
-        /// </summary>
         private readonly AzureSettings _settings;
-        /// <summary>
-        /// The logger
-        /// </summary>
         private readonly IGraphLogger _logger;
 
-        /// <summary>
-        /// The current audio processor
-        /// </summary>
-        private AudioProcessor _currentAudioProcessor;
-        /// <summary>
-        /// The capture
-        /// </summary>
+        private readonly AudioProcessor _currentAudioProcessor;
         private CaptureEvents _capture;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MediaStream" /> class.
-
         /// </summary>
         /// <param name="settings">The settings.</param>
         /// <param name="logger">The logger.</param>
@@ -90,6 +59,15 @@ namespace RecordingBot.Services.Media
             _settings = (AzureSettings)settings;
             _logger = logger;
             _mediaId = mediaId;
+
+            _buffer = new BufferBlock<SerializableAudioMediaBuffer>(new DataflowBlockOptions { CancellationToken = _tokenSource.Token });
+            _tokenSource = new CancellationTokenSource();
+            _currentAudioProcessor = new AudioProcessor(_settings);
+
+            if (_settings.CaptureEvents)
+            {
+                _capture = new CaptureEvents(Path.Combine(Path.GetTempPath(), BotConstants.DefaultOutputFolder, _settings.EventsFolder, _mediaId, "media"));
+            }
         }
 
         /// <summary>
@@ -101,7 +79,7 @@ namespace RecordingBot.Services.Media
         {
             if (!_isRunning)
             {
-                await _start();
+                await Start().ConfigureAwait(false);
             }
 
             try
@@ -114,7 +92,6 @@ namespace RecordingBot.Services.Media
                 _logger.Error(e, "Cannot enqueue because queuing operation has been cancelled");
             }
         }
-
 
         /// <summary>
         /// Ends this instance.
@@ -138,7 +115,6 @@ namespace RecordingBot.Services.Media
 
                 _buffer.Complete();
                 _buffer.TryDispose();
-                _buffer = null;
                 _tokenSource.Cancel();
                 _tokenSource.Dispose();
                 _isRunning = false;
@@ -150,17 +126,12 @@ namespace RecordingBot.Services.Media
             _syncLock.Release();
         }
 
-        /// <summary>
-        /// Starts this instance.
-        /// </summary>
-        private async Task _start()
+        private async Task Start()
         {
             await _syncLock.WaitAsync().ConfigureAwait(false);
             if (!_isRunning)
             {
-                _tokenSource = new CancellationTokenSource();
-                _buffer = new BufferBlock<SerializableAudioMediaBuffer>(new DataflowBlockOptions { CancellationToken = _tokenSource.Token });
-                await Task.Factory.StartNew(_process).ConfigureAwait(false);
+                await Task.Run(Process).ConfigureAwait(false);
                 _isRunning = true;
             }
             _syncLock.Release();
@@ -169,10 +140,8 @@ namespace RecordingBot.Services.Media
         /// <summary>
         /// Processes this instance.
         /// </summary>
-        private async Task _process()
+        private async Task Process()
         {
-            _currentAudioProcessor = new AudioProcessor(_settings);
-
             if (_settings.CaptureEvents && !_isDraining && _capture == null)
             {
                 _capture = new CaptureEvents(Path.Combine(Path.GetTempPath(), BotConstants.DefaultOutputFolder, _settings.EventsFolder, _mediaId, "media"));
@@ -186,10 +155,10 @@ namespace RecordingBot.Services.Media
 
                     if (_settings.CaptureEvents)
                     {
-                        await _capture?.Append(data);
+                        await _capture.Append(data).ConfigureAwait(false);
                     }
-                        
-                    await _currentAudioProcessor.Append(data);
+
+                    await _currentAudioProcessor.Append(data).ConfigureAwait(false);
 
                     _tokenSource.Token.ThrowIfCancellationRequested();
                 }
@@ -206,20 +175,19 @@ namespace RecordingBot.Services.Media
             {
                 // Catch all other exceptions and log
                 _logger.Error(ex, "Caught Exception");
-
                 // Continue processing elements in the queue
-                await _process().ConfigureAwait(false);
+                await Process().ConfigureAwait(false);
             }
 
             //send final segment as a last precation in case the loop did not process it
             if (_currentAudioProcessor != null)
             {
-                await _chunkProcess();
+                await ChunkProcess().ConfigureAwait(false);
             }
 
             if (_settings.CaptureEvents)
             {
-                await _capture?.Finalise();
+                await _capture.Finalize().ConfigureAwait(false);
             }
 
             _isDraining = false;
@@ -228,16 +196,16 @@ namespace RecordingBot.Services.Media
         /// <summary>
         /// Chunks the process.
         /// </summary>
-        async Task _chunkProcess()
+        private async Task ChunkProcess()
         {
             try
             {
-                var finalData = await _currentAudioProcessor.Finalise();
+                var finalData = await _currentAudioProcessor.Finalise().ConfigureAwait(false);
                 _logger.Info($"Recording saved to: {finalData}");
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Caught exception while processing chunck.");
+                _logger.Error(ex, "Caught exception while processing chunk.");
             }
         }
     }
