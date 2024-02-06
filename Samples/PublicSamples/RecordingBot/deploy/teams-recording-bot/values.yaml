@@ -10,10 +10,10 @@ scale:
 host: null
 
 image:
-  domain: null
+  registry: null
+  name: null
+  tag: null
   pullPolicy: IfNotPresent
-  name: ""
-  tag: ""
 
 ingress:
   tls:
@@ -65,6 +65,7 @@ resources: {}
 ingress-nginx:
   namespaceOverride: "ingress-nginx"
   controller:
+    allowSnippetAnnotations: true
     replicaCount: 1
     nodeSelector:
       "kubernetes.io/os": linux
