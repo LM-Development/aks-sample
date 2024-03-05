@@ -7,7 +7,7 @@
 // Last Modified On : 09-03-2020
 // ***********************************************************************
 // <copyright file="ServiceHost.cs" company="Microsoft">
-//     Copyright ©  2020
+//     Copyright Â©  2020
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
@@ -35,10 +35,9 @@ namespace RecordingBot.Services.ServiceSetup
         public ServiceHost Configure(IServiceCollection services, IConfiguration configuration)
         {
             Services = services;
-
-            Services.AddSingleton<IGraphLogger>(_ => new GraphLogger("RecordingBot", redirectToTrace: true));
+            Services.AddSingleton<IGraphLogger, GraphLogger>(_ => new GraphLogger("RecordingBot", redirectToTrace: true));
             Services.AddSingleton<IAzureSettings>(_ => _.GetRequiredService<AzureSettings>());
-            Services.AddSingleton<IEventPublisher>(_ => new EventGridPublisher(_.GetRequiredService<IOptions<AzureSettings>>().Value));
+            Services.AddSingleton<IEventPublisher, EventGridPublisher>(_ => new EventGridPublisher(_.GetRequiredService<IOptions<AzureSettings>>().Value));
             Services.AddSingleton<IBotService, BotService>();
 
             return this;

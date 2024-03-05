@@ -1,6 +1,7 @@
-override:
-  name: ""
-  namespace: ""
+global:
+  override:
+    name: "" 
+    namespace: ""
 
 scale:
   maxReplicaCount: 3
@@ -9,9 +10,10 @@ scale:
 host: null
 
 image:
-  domain: null
+  registry: null
+  name: null
+  tag: null
   pullPolicy: IfNotPresent
-  tag: ""
 
 ingress:
   tls:
@@ -61,8 +63,9 @@ resources: {}
   #   memory: 128Mi
 
 ingress-nginx:
-  namespaceOverride: ingress-nginx
+  namespaceOverride: "ingress-nginx"
   controller:
+    allowSnippetAnnotations: true
     replicaCount: 1
     nodeSelector:
       "kubernetes.io/os": linux
@@ -73,4 +76,4 @@ ingress-nginx:
     config:
       log-format-stream: ""
     extraArgs:
-      tcp-services-configmap: ingress-nginx/teams-recording-bot-tcp-services
+      tcp-service-configmap: ingress-nginx/teams-recording-bot-tcp-services

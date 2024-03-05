@@ -145,8 +145,7 @@ namespace RecordingBot.Services.Bot
                     DisplayName = joinCallBody.DisplayName,
                 };
             }
-
-            var statefulCall = await _client.Calls().AddAsync(joinParams, scenarioId).ConfigureAwait(false);
+            var statefulCall = await Client.Calls().AddAsync(joinParams, scenarioId).ConfigureAwait(false);
             statefulCall.GraphLogger.Info($"Call creation complete: {statefulCall.Id}");
             return statefulCall;
         }

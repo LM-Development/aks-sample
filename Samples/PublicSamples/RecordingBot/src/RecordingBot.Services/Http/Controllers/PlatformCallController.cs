@@ -69,6 +69,7 @@ namespace RecordingBot.Services.Http.Controllers
 
                 var httpRequestMessage = new HttpRequestMessage();
                 httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Request.Headers.Authorization);
+                
                 // Autenticate the incoming request.
                 result = await _commsClient.AuthenticationProvider
                     .ValidateInboundRequestAsync(httpRequestMessage)

@@ -9,7 +9,9 @@ namespace RecordingBot.Model.Extension
     public static class HttpRequestExtensions
     {
         private const string UnknownHostName = "UNKNOWN-HOST";
+
         private const string MultipleHostName = "MULTIPLE-HOST";
+
         private const string Comma = ",";
 
         //
@@ -24,9 +26,9 @@ namespace RecordingBot.Model.Extension
         //     A New Uri object representing request Uri.
         public static Uri GetUri(this HttpRequest request)
         {
-            if (request is null)
+            if (request == null)
             {
-                throw new ArgumentNullException(nameof(request));
+                throw new ArgumentNullException("request");
             }
 
             if (string.IsNullOrWhiteSpace(request.Scheme))

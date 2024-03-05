@@ -11,6 +11,7 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+using Microsoft.Graph;
 using Microsoft.Graph.Contracts;
 using Microsoft.Graph.Models;
 using RecordingBot.Model.Models;
