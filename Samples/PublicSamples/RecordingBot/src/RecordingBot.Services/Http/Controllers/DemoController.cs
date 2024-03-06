@@ -7,7 +7,7 @@
 // Last Modified On : 09-03-2020
 // ***********************************************************************
 // <copyright file="DemoController.cs" company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation. All rights reserved.
+//     Copyright © Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 // </copyright>
 // <summary>ScreenshotsController retrieves the screenshots stored by the bot</summary>

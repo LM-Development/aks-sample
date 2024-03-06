@@ -7,7 +7,7 @@
 // Last Modified On : 08-17-2020
 // ***********************************************************************
 // <copyright file="ExceptionExtensions.cs" company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation. All rights reserved.
+//     Copyright © Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 // </copyright>
 // <summary>Helper class to handle exceptions</summary>

@@ -7,7 +7,7 @@
 // Last Modified On : 09-03-2020
 // ***********************************************************************
 // <copyright file="ServiceHost.cs" company="Microsoft">
-//     Copyright ©  2020
+//     Copyright Â© 2020
 // </copyright>
 // <summary></summary>
 // ***********************************************************************

@@ -7,7 +7,7 @@
 // Last Modified On : 09-07-2020
 // ***********************************************************************
 // <copyright file="BotMediaStream.cs" company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation. All rights reserved.
+//     Copyright © Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 // </copyright>
 // <summary>The bot media stream.</summary>

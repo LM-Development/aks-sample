@@ -7,7 +7,7 @@
 // Last Modified On : 08-17-2020
 // ***********************************************************************
 // <copyright file="AuthenticationProvider.cs" company="Microsoft">
-//     Copyright �  2020
+//     Copyright © 2020
 // </copyright>
 // <summary></summary>
 // ***********************************************************************>

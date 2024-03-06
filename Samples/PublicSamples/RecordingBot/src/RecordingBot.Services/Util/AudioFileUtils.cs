@@ -7,7 +7,7 @@
 // Last Modified On : 09-09-2020
 // ***********************************************************************
 // <copyright file="AudioFileUtils.cs" company="Microsoft">
-//     Copyright ©  2020
+//     Copyright © 2020
 // </copyright>
 // <summary></summary>
 // ***********************************************************************

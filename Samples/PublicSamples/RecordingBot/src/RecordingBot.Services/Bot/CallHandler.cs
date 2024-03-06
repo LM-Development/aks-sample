@@ -7,7 +7,7 @@
 // Last Modified On : 09-07-2020
 // ***********************************************************************
 // <copyright file="CallHandler.cs" company="Microsoft">
-//     Copyright ©  2020
+//     Copyright Â© 2020
 // </copyright>
 // <summary></summary>
 // ***********************************************************************>

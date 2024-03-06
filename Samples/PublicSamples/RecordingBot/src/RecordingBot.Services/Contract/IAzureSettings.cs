@@ -7,7 +7,7 @@
 // Last Modified On : 08-28-2020
 // ***********************************************************************
 // <copyright file="IAzureSettings.cs" company="Microsoft Corporation">
-//      Copyright ©  2020 Microsoft Corporation. All rights reserved.
+//      Copyright © 2020 Microsoft Corporation. All rights reserved.
 // </copyright>
 // <summary></summary>
 // ***********************************************************************

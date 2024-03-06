@@ -7,7 +7,7 @@
 // Last Modified On : 09-08-2020
 // ***********************************************************************
 // <copyright file="AudioSettings.cs" company="Microsoft">
-//     Copyright ©  2020
+//     Copyright © 2020
 // </copyright>
 // <summary></summary>
 // ***********************************************************************

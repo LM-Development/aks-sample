@@ -7,7 +7,7 @@
 // Last Modified On : 09-07-2020
 // ***********************************************************************
 // <copyright file="JoinCallBody.cs" company="Microsoft">
-//     Copyright ©  2020
+//     Copyright © 2020
 // </copyright>
 // <summary></summary>
 // ***********************************************************************

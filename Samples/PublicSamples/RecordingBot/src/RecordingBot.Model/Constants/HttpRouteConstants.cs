@@ -7,7 +7,7 @@
 // Last Modified On : 09-07-2020
 // ***********************************************************************
 // <copyright file="HttpRouteConstants.cs" company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation. All rights reserved.
+//     Copyright © Microsoft Corporation. All rights reserved.
 // </copyright>
 // <summary>HTTP route constants for routing requests to CallController methods.</summary>
 // ***********************************************************************-

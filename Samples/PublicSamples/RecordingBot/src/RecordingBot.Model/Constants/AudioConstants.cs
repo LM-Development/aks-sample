@@ -7,7 +7,7 @@
 // Last Modified On : 09-08-2020
 // ***********************************************************************
 // <copyright file="AudioConstants.cs" company="Microsoft">
-//     Copyright ©  2020
+//     Copyright © 2020
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
