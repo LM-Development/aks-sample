@@ -1,17 +1,3 @@
-// ***********************************************************************
-// Assembly         : RecordingBot.Services
-// Author           : JasonTheDeveloper
-// Created          : 09-07-2020
-//
-// Last Modified By : dannygar
-// Last Modified On : 08-17-2020
-// ***********************************************************************
-// <copyright file="HeartbeatHandler.cs" company="Microsoft">
-//     Copyright ©  2020
-// </copyright>
-// <summary></summary>
-// ***********************************************************************>
-
 using Microsoft.Graph.Communications.Common;
 using Microsoft.Graph.Communications.Common.Telemetry;
 using System;
@@ -20,66 +6,38 @@ using System.Timers;
 
 namespace RecordingBot.Services.Bot
 {
-    /// <summary>
-    /// The base class for handling heartbeats.
-    /// </summary>
     public abstract class HeartbeatHandler : ObjectRootDisposable
     {
-        /// <summary>
-        /// The heartbeat timer
-        /// </summary>
-        private readonly Timer heartbeatTimer;
+        private readonly Timer _heartbeatTimer;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="HeartbeatHandler" /> class.
-        /// </summary>
-        /// <param name="frequency">The frequency of the heartbeat.</param>
-        /// <param name="logger">The graph logger.</param>
         public HeartbeatHandler(TimeSpan frequency, IGraphLogger logger)
             : base(logger)
         {
             // initialize the timer
-            heartbeatTimer = new Timer(frequency.TotalMilliseconds)
+            _heartbeatTimer = new Timer(frequency.TotalMilliseconds)
             {
                 Enabled = true,
                 AutoReset = true
             };
-            heartbeatTimer.Elapsed += HeartbeatDetected;
+            _heartbeatTimer.Elapsed += HeartbeatDetected;
         }
 
-        /// <summary>
-        /// This function is called whenever the heartbeat frequency has ellapsed.
-        /// </summary>
-        /// <param name="args">The elapsed event args.</param>
-        /// <returns>The <see cref="Task" />.</returns>
         protected abstract Task HeartbeatAsync(ElapsedEventArgs args);
 
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
-            heartbeatTimer.Elapsed -= HeartbeatDetected;
-            heartbeatTimer.Stop();
-            heartbeatTimer.Dispose();
+            _heartbeatTimer.Elapsed -= HeartbeatDetected;
+            _heartbeatTimer.Stop();
+            _heartbeatTimer.Dispose();
         }
 
-        /// <summary>
-        /// The heartbeat function.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="args">The elapsed event args.</param>
-        private async void HeartbeatDetected(object sender, ElapsedEventArgs args)
+        private void HeartbeatDetected(object sender, ElapsedEventArgs args)
         {
             var task = $"{GetType().FullName}.{nameof(HeartbeatAsync)}(args)";
-            GraphLogger.Verbose($"Starting running task: {task}");
-            try
-            {
-                await HeartbeatAsync(args);
-            }
-            catch (Exception ex)
-            {
-                GraphLogger.Error(ex, $"Error in task: {task}");
-            }
+            GraphLogger.Verbose($"Starting running task: " + task);
+            _ = Task.Run(() => HeartbeatAsync(args)).ForgetAndLogExceptionAsync(GraphLogger, task);
         }
     }
 }

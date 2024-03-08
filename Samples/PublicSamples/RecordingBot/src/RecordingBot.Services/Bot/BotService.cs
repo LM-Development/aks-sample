@@ -1,16 +1,4 @@
-// ***********************************************************************
-// Assembly         : RecordingBot.Services
-// Author           : JasonTheDeveloper
-// Created          : 09-07-2020
-//
-// Last Modified By : dannygar
-// Last Modified On : 09-03-2020
-// ***********************************************************************
-// <copyright file="BotService.cs" company="Microsoft">
-//     Copyright ©  2020
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
+using Microsoft.Graph;
 using Microsoft.Graph.Communications.Calls;
 using Microsoft.Graph.Communications.Calls.Media;
 using Microsoft.Graph.Communications.Client;
@@ -31,52 +19,24 @@ using System.Threading.Tasks;
 
 namespace RecordingBot.Services.Bot
 {
-    /// <summary>
-    /// Class BotService.
-    /// Implements the <see cref="System.IDisposable" />
-    /// Implements the <see cref="RecordingBot.Services.Contract.IBotService" />
-    /// </summary>
-    /// <seealso cref="System.IDisposable" />
-    /// <seealso cref="RecordingBot.Services.Contract.IBotService" />
     public class BotService : IDisposable, IBotService
     {
-        /// <summary>
-        /// The logger
-        /// </summary>
         private readonly IGraphLogger _logger;
-        /// <summary>
-        /// The event publisher
-        /// </summary>
         private readonly IEventPublisher _eventPublisher;
-        /// <summary>
-        /// The settings
-        /// </summary>
         private readonly AzureSettings _settings;
         public ConcurrentDictionary<string, CallHandler> CallHandlers { get; } = new ConcurrentDictionary<string, CallHandler>();
+        public ICommunicationsClient Client { get; private set; }
 
-        /// <summary>
-        /// Gets the entry point for stateful bot.
-        /// </summary>
-        /// <value>The client.</value>
-        public ICommunicationsClient Client
+        /// <inheritdoc />
+        public void Dispose()
         {
-            get
-            {
-                if (_client == null)
-                {
-                    InitializeClient();
-                }
-                return _client;
-            }
-        }
-        private ICommunicationsClient _client;
+            // prevent derived type with finalizer from needing to re-implement IDisposable to call it
+            GC.SuppressFinalize(this);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BotService" /> class.
-        /// </summary>
-        /// <param name="logger">The logger.</param>
-        /// <param name="eventPublisher">The event publisher.</param>
-        /// <param name="settings">The settings.</param>
+            Client?.Dispose();
+            Client = null;
+        }
+
         public BotService(IGraphLogger logger, IEventPublisher eventPublisher, IAzureSettings settings)
         {
             _logger = logger;
@@ -84,23 +44,23 @@ namespace RecordingBot.Services.Bot
             _settings = (AzureSettings)settings;
         }
 
-        public void Dispose()
-        {
-            _client?.Dispose();
-            _client = null;
-        }
-
         public void Initialize()
         {
-            InitializeClient();
-            RegisterCallEventHandlers();
+            var name = GetType().Assembly.GetName().Name;
+            var builder = new CommunicationsClientBuilder(name, _settings.AadAppId, _logger);
+
+            var authProvider = new AuthenticationProvider(name, _settings.AadAppId, _settings.AadAppSecret, _logger);
+
+            builder.SetAuthenticationProvider(authProvider);
+            builder.SetNotificationUrl(_settings.CallControlBaseUrl);
+            builder.SetMediaPlatformSettings(_settings.MediaPlatformSettings);
+            builder.SetServiceBaseUrl(_settings.PlaceCallEndpointUrl);
+
+            Client = builder.Build();
+            Client.Calls().OnIncoming += CallsOnIncoming;
+            Client.Calls().OnUpdated += CallsOnUpdated;
         }
 
-        /// <summary>
-        /// End a particular call.
-        /// </summary>
-        /// <param name="callLegId">The call leg id.</param>
-        /// <returns>The <see cref="Task" />.</returns>
         public async Task EndCallByCallLegIdAsync(string callLegId)
         {
             try
@@ -111,20 +71,17 @@ namespace RecordingBot.Services.Bot
             {
                 // Manually remove the call from SDK state.
                 // This will trigger the ICallCollection.OnUpdated event with the removed resource.
-                _client.Calls().TryForceRemove(callLegId, out ICall _);
+                Client.Calls().TryForceRemove(callLegId, out ICall _);
             }
         }
 
-        /// <summary>
-        /// Joins the call asynchronously.
-        /// </summary>
-        /// <param name="joinCallBody">The join call body.</param>
-        /// <returns>The <see cref="ICall" /> that was requested to join.</returns>
         public async Task<ICall> JoinCallAsync(JoinCallBody joinCallBody)
         {
             // A tracking id for logging purposes. Helps identify this call in logs.
             var scenarioId = Guid.NewGuid();
+
             var (chatInfo, meetingInfo) = JoinInfo.ParseJoinURL(joinCallBody.JoinURL);
+
             var tenantId = (meetingInfo as OrganizerMeetingInfo).Organizer.GetPrimaryIdentity().GetTenantId();
             var mediaSession = CreateLocalMediaSession();
 
@@ -150,32 +107,12 @@ namespace RecordingBot.Services.Bot
             return statefulCall;
         }
 
-        private void InitializeClient()
-        {
-            var name = GetType().Assembly.GetName().Name;
-            var builder = new CommunicationsClientBuilder(name, _settings.AadAppId, _logger);
-            var authProvider = new AuthenticationProvider(name, _settings.AadAppId, _settings.AadAppSecret, _logger);
-
-            builder.SetAuthenticationProvider(authProvider);
-            builder.SetNotificationUrl(_settings.CallControlBaseUrl);
-            builder.SetMediaPlatformSettings(_settings.MediaPlatformSettings);
-            builder.SetServiceBaseUrl(_settings.PlaceCallEndpointUrl);
-
-            _client = builder.Build();
-        }
-
-        /// <summary>
-        /// Creates the local media session.
-        /// </summary>
-        /// <param name="mediaSessionId">The media session identifier.
-        /// This should be a unique value for each call.</param>
-        /// <returns>The <see cref="ILocalMediaSession" />.</returns>
         private ILocalMediaSession CreateLocalMediaSession(Guid mediaSessionId = default)
         {
             try
             {
                 // create media session object, this is needed to establish call connections
-                return _client.CreateMediaSession(
+                return Client.CreateMediaSession(
                     new AudioSocketSettings
                     {
                         StreamDirections = StreamDirection.Recvonly,
@@ -196,31 +133,44 @@ namespace RecordingBot.Services.Bot
             }
         }
 
-        private void RegisterCallEventHandlers()
-        {
-            _client.Calls().OnIncoming += CallsOnIncoming;
-            _client.Calls().OnUpdated += CallsOnUpdated;
-        }
-
-        /// <summary>
-        /// Incoming call handler.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="args">The <see cref="CollectionEventArgs{TResource}" /> instance containing the event data.</param>
         private void CallsOnIncoming(ICallCollection sender, CollectionEventArgs<ICall> args)
         {
             args.AddedResources.ForEach(call =>
             {
-                var mediaSession = Guid.TryParse(call.Id, out Guid callId) ? CreateLocalMediaSession(callId) : CreateLocalMediaSession();
+                // Get the policy recording parameters.
+
+                // The context associated with the incoming call.
+                IncomingContext incomingContext = call.Resource.IncomingContext;
+
+                // The RP participant.
+                string observedParticipantId = incomingContext.ObservedParticipantId;
+
+                // If the observed participant is a delegate.
+                IdentitySet onBehalfOfIdentity = incomingContext.OnBehalfOf;
+
+                // If a transfer occured, the transferor.
+                IdentitySet transferorIdentity = incomingContext.Transferor;
+
+                string countryCode = null;
+                EndpointType? endpointType = null;
+
+                // Note: this should always be true for CR calls.
+                if (incomingContext.ObservedParticipantId == incomingContext.SourceParticipantId)
+                {
+                    // The dynamic location of the RP.
+                    countryCode = call.Resource.Source.CountryCode;
+
+                    // The type of endpoint being used.
+                    endpointType = call.Resource.Source.EndpointType;
+                }
+
+                IMediaSession mediaSession = Guid.TryParse(call.Id, out Guid callId) ? CreateLocalMediaSession(callId) : CreateLocalMediaSession();
+
+                // Answer call
                 call?.AnswerAsync(mediaSession).ForgetAndLogExceptionAsync(call.GraphLogger, $"Answering call {call.Id} with scenario {call.ScenarioId}.");
             });
         }
 
-        /// <summary>
-        /// Updated call handler.
-        /// </summary>
-        /// <param name="sender">The <see cref="ICallCollection" /> sender.</param>
-        /// <param name="args">The <see cref="CollectionEventArgs{ICall}" /> instance containing the event data.</param>
         private void CallsOnUpdated(ICallCollection sender, CollectionEventArgs<ICall> args)
         {
             foreach (var call in args.AddedResources)
@@ -237,12 +187,6 @@ namespace RecordingBot.Services.Bot
             }
         }
 
-        /// <summary>
-        /// The get handler or throw.
-        /// </summary>
-        /// <param name="callLegId">The call leg id.</param>
-        /// <returns>The <see cref="CallHandler" />.</returns>
-        /// <exception cref="ArgumentException">call ({callLegId}) not found</exception>
         private CallHandler GetHandlerOrThrow(string callLegId)
         {
             if (!CallHandlers.TryGetValue(callLegId, out CallHandler handler))

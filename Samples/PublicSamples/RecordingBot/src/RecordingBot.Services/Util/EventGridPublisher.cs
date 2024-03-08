@@ -1,16 +1,3 @@
-﻿// ***********************************************************************
-// Assembly         : RecordingBot.Services
-// Author           : JasonTheDeveloper
-// Created          : 09-07-2020
-//
-// Last Modified By : dannygar
-// Last Modified On : 09-07-2020
-// ***********************************************************************
-// <copyright file="EventGridPublisher.cs" company="Microsoft">
-//     Copyright ©  2020
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
 using Azure;
 using Azure.Messaging.EventGrid;
 using RecordingBot.Model.Constants;
@@ -21,33 +8,28 @@ using System;
 
 namespace RecordingBot.Services.Util
 {
-    /// <summary>
-    /// Class EventGridPublisher.
-    /// Implements the <see cref="RecordingBot.Services.Contract.IEventPublisher" />
-    /// </summary>
-    /// <seealso cref="RecordingBot.Services.Contract.IEventPublisher" />
     public class EventGridPublisher : IEventPublisher
     {
-        private readonly string topicName;
-        private readonly string regionName;
-        private readonly string topicKey;
+        private readonly string _topicName = "recordingbotevents";
+        private readonly string _regionName = string.Empty;
+        private readonly string _topicKey = string.Empty;
 
         public EventGridPublisher(AzureSettings settings)
         {
-            topicName = settings.TopicName ?? "recordingbotevents";
-            topicKey = settings.TopicKey;
-            regionName = settings.RegionName;
+            _topicName = settings.TopicName ?? "recordingbotevents";
+            _topicKey = settings.TopicKey;
+            _regionName = settings.RegionName;
         }
 
         public void Publish(string subject, string message, string topicName)
         {
-            topicName ??= this.topicName;
+            topicName ??= _topicName;
 
-            var topicEndpoint = string.Format(BotConstants.topicEndpoint, topicName, regionName);
+            var topicEndpoint = string.Format(BotConstants.topicEndpoint, topicName, _regionName);
 
-            if (!string.IsNullOrEmpty(topicKey))
+            if (!string.IsNullOrEmpty(_topicKey))
             {
-                var client = new EventGridPublisherClient(new Uri(topicEndpoint), new AzureKeyCredential(topicKey));
+                var client = new EventGridPublisherClient(new Uri(topicEndpoint), new AzureKeyCredential(_topicKey));
 
                 var eventGrid = new EventGridEvent(subject, "RecordingBot.BotEventData", "2.0", new BotEventData { Message = message })
                 {
@@ -59,10 +41,6 @@ namespace RecordingBot.Services.Util
                 if (subject.StartsWith("CallTerminated"))
                 {
                     Console.WriteLine($"Publish to {topicName} subject {subject} message {message}");
-                }
-                else
-                {
-                    Console.WriteLine($"Publish to {topicName} subject {subject}");
                 }
             }
             else

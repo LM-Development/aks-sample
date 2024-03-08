@@ -1,17 +1,3 @@
-// ***********************************************************************
-// Assembly         : RecordingBot.Services
-// Author           : JasonTheDeveloper
-// Created          : 09-07-2020
-//
-// Last Modified By : dannygar
-// Last Modified On : 09-07-2020
-// ***********************************************************************
-// <copyright file="CallHandler.cs" company="Microsoft">
-//     Copyright ©  2020
-// </copyright>
-// <summary></summary>
-// ***********************************************************************>
-
 using Microsoft.Graph.Communications.Calls;
 using Microsoft.Graph.Communications.Calls.Media;
 using Microsoft.Graph.Communications.Common.Telemetry;
@@ -30,53 +16,16 @@ using System.Timers;
 
 namespace RecordingBot.Services.Bot
 {
-    /// <summary>
-    /// Call Handler Logic.
-    /// </summary>
     public class CallHandler : HeartbeatHandler
     {
-        /// <summary>
-        /// Gets the call.
-        /// </summary>
-        /// <value>The call.</value>
         public ICall Call { get; }
-
-        /// <summary>
-        /// Gets the bot media stream.
-        /// </summary>
-        /// <value>The bot media stream.</value>
         public BotMediaStream BotMediaStream { get; private set; }
-
-        /// <summary>
-        /// The recording status index
-        /// </summary>
         private int recordingStatusIndex = -1;
-
-        /// <summary>
-        /// The settings
-        /// </summary>
         private readonly AzureSettings _settings;
-        /// <summary>
-        /// The event publisher
-        /// </summary>
         private readonly IEventPublisher _eventPublisher;
-
-        /// <summary>
-        /// The capture
-        /// </summary>
         private readonly CaptureEvents _capture;
-
-        /// <summary>
-        /// The is disposed
-        /// </summary>
         private bool _isDisposed = false;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CallHandler" /> class.
-        /// </summary>
-        /// <param name="statefulCall">The stateful call.</param>
-        /// <param name="settings">The settings.</param>
-        /// <param name="eventPublisher">The event publisher.</param>
         public CallHandler(ICall statefulCall, IAzureSettings settings, IEventPublisher eventPublisher) : base(TimeSpan.FromMinutes(10), statefulCall?.GraphLogger)
         {
             _settings = (AzureSettings)settings;
@@ -115,11 +64,6 @@ namespace RecordingBot.Services.Bot
             _eventPublisher.Publish("CallDisposedOK", $"Call.Id: {Call.Id}");
         }
 
-        /// <summary>
-        /// Called when recording status flip timer fires.
-        /// </summary>
-        /// <param name="source">The <see cref="ICall" /> source.</param>
-        /// <param name="e">The <see cref="ElapsedEventArgs" /> instance containing the event data.</param>
         private void OnRecordingStatusFlip(ICall source)
         {
             _ = Task.Run(async () =>
@@ -161,11 +105,6 @@ namespace RecordingBot.Services.Bot
             }).ForgetAndLogExceptionAsync(GraphLogger);
         }
 
-        /// <summary>
-        /// Event fired when the call has been updated.
-        /// </summary>
-        /// <param name="sender">The call.</param>
-        /// <param name="e">The event args containing call changes.</param>
         private async void CallOnUpdated(ICall sender, ResourceEventArgs<Call> e)
         {
             GraphLogger.Info($"Call status updated to {e.NewResource.State} - {e.NewResource.ResultInfo?.Message}");
@@ -199,12 +138,6 @@ namespace RecordingBot.Services.Bot
             }
         }
 
-        /// <summary>
-        /// Creates the participant update json.
-        /// </summary>
-        /// <param name="participantId">The participant identifier.</param>
-        /// <param name="participantDisplayName">Display name of the participant.</param>
-        /// <returns>System.String.</returns>
         private static string CreateParticipantUpdateJson(string participantId, string participantDisplayName = "")
         {
             var sb = new StringBuilder();
@@ -220,14 +153,6 @@ namespace RecordingBot.Services.Bot
             return sb.ToString();
         }
 
-        /// <summary>
-        /// Updates the participant.
-        /// </summary>
-        /// <param name="participants">The participants.</param>
-        /// <param name="participant">The participant.</param>
-        /// <param name="added">if set to <c>true</c> [added].</param>
-        /// <param name="participantDisplayName">Display name of the participant.</param>
-        /// <returns>System.String.</returns>
         private static string UpdateParticipant(List<IParticipant> participants, IParticipant participant, bool added, string participantDisplayName = "")
         {
             if (added)
@@ -238,11 +163,6 @@ namespace RecordingBot.Services.Bot
             return CreateParticipantUpdateJson(participant.Id, participantDisplayName);
         }
 
-        /// <summary>
-        /// Updates the participants.
-        /// </summary>
-        /// <param name="eventArgs">The event arguments.</param>
-        /// <param name="added">if set to <c>true</c> [added].</param>
         private void UpdateParticipants(ICollection<IParticipant> eventArgs, bool added = true)
         {
             foreach (var participant in eventArgs)
@@ -255,13 +175,13 @@ namespace RecordingBot.Services.Bot
 
                 if (participantDetails != null)
                 {
-                    json = UpdateParticipant(BotMediaStream.participants, participant, added, participantDetails.DisplayName);
+                    json = UpdateParticipant(BotMediaStream.Participants, participant, added, participantDetails.DisplayName);
                 }
                 else if (participant.Resource.Info.Identity.AdditionalData?.Count > 0)
                 {
                     if (CheckParticipantIsUsable(participant))
                     {
-                        json = UpdateParticipant(BotMediaStream.participants, participant, added);
+                        json = UpdateParticipant(BotMediaStream.Participants, participant, added);
                     }
                 }
 
@@ -273,11 +193,6 @@ namespace RecordingBot.Services.Bot
             }
         }
 
-        /// <summary>
-        /// Event fired when the participants collection has been updated.
-        /// </summary>
-        /// <param name="sender">Participants collection.</param>
-        /// <param name="args">Event args containing added and removed participants.</param>
         public void ParticipantsOnUpdated(IParticipantCollection sender, CollectionEventArgs<IParticipant> args)
         {
             if (_settings.CaptureEvents)
@@ -288,11 +203,6 @@ namespace RecordingBot.Services.Bot
             UpdateParticipants(args.RemovedResources, false);
         }
 
-        /// <summary>
-        /// Checks the participant is usable.
-        /// </summary>
-        /// <param name="p">The p.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private static bool CheckParticipantIsUsable(IParticipant p)
         {
             foreach (var i in p.Resource.Info.Identity.AdditionalData)

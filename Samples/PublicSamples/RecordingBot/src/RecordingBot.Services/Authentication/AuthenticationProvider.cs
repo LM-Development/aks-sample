@@ -1,21 +1,3 @@
-// ***********************************************************************
-// Assembly         : RecordingBot.Services
-// Author           : JasonTheDeveloper
-// Created          : 09-07-2020
-//
-// Last Modified By : dannygar
-// Last Modified On : 08-17-2020
-// ***********************************************************************
-// <copyright file="AuthenticationProvider.cs" company="Microsoft">
-//     Copyright �  2020
-// </copyright>
-// <summary></summary>
-// ***********************************************************************>
-
-// THIS CODE HAS NOT BEEN TESTED RIGOROUSLY.USING THIS CODE IN PRODUCTION ENVIRONMENT IS STRICTLY NOT RECOMMENDED.
-// THIS SAMPLE IS PURELY FOR DEMONSTRATION PURPOSES ONLY.
-// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.
-
 using Microsoft.Graph.Communications.Client.Authentication;
 using Microsoft.Graph.Communications.Common;
 using Microsoft.Graph.Communications.Common.Telemetry;
@@ -35,36 +17,14 @@ using System.Threading.Tasks;
 
 namespace RecordingBot.Services.Authentication
 {
-    /// <summary>
-    /// The authentication provider for this bot instance.
-    /// </summary>
-    /// <seealso cref="IRequestAuthenticationProvider" />
     public class AuthenticationProvider : ObjectRoot, IRequestAuthenticationProvider
     {
-        /// <summary>
-        /// The open ID configuration refresh interval.
-        /// </summary>
-        private readonly TimeSpan openIdConfigRefreshInterval = TimeSpan.FromHours(2);
-
-        /// <summary>
-        /// The previous update timestamp for OpenIdConfig.
-        /// </summary>
-        private DateTime prevOpenIdConfigUpdateTimestamp = DateTime.MinValue;
-
-        /// <summary>
-        /// The open identifier configuration.
-        /// </summary>
-        private OpenIdConnectConfiguration openIdConfiguration;
+        private readonly TimeSpan _openIdConfigRefreshInterval = TimeSpan.FromHours(2);
+        private DateTime _prevOpenIdConfigUpdateTimestamp = DateTime.MinValue;
+        private OpenIdConnectConfiguration _openIdConfiguration;
         private readonly ConfidentialClientApplicationOptions _clientOptions;
-        private static readonly IEnumerable<string> _defaultScopes = new List<string> { "https://graph.microsoft.com/.default" };
+        private static readonly IEnumerable<string> _defaultScopes = ["https://graph.microsoft.com/.default"];
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AuthenticationProvider" /> class.
-        /// </summary>
-        /// <param name="appName">The application name.</param>
-        /// <param name="appId">The application identifier.</param>
-        /// <param name="appSecret">The application secret.</param>
-        /// <param name="logger">The logger.</param>
         public AuthenticationProvider(string appName, string appId, string appSecret, IGraphLogger logger)
             : base(logger.NotNull(nameof(logger)).CreateShim(nameof(AuthenticationProvider)))
         {
@@ -119,8 +79,6 @@ namespace RecordingBot.Services.Authentication
         /// This method will be called any time we have an incoming request.
         /// Returning invalid result will trigger a Forbidden response.
         /// </summary>
-        /// <param name="request">The request.</param>
-        /// <returns>The <see cref="RequestValidationResult" /> structure.</returns>
         public async Task<RequestValidationResult> ValidateInboundRequestAsync(HttpRequestMessage request)
         {
             var token = request?.Headers?.Authorization?.Parameter;
@@ -133,7 +91,7 @@ namespace RecordingBot.Services.Authentication
             // with a private certificate.  In order for us to be able to ensure the certificate is
             // valid we need to download the corresponding public keys from a trusted source.
             const string authDomain = AzureConstants.AuthDomain;
-            if (openIdConfiguration == null || DateTime.Now > prevOpenIdConfigUpdateTimestamp.Add(openIdConfigRefreshInterval))
+            if (_openIdConfiguration == null || DateTime.Now > _prevOpenIdConfigUpdateTimestamp.Add(_openIdConfigRefreshInterval))
             {
                 GraphLogger.Info("Updating OpenID configuration");
 
@@ -142,9 +100,9 @@ namespace RecordingBot.Services.Authentication
                     new ConfigurationManager<OpenIdConnectConfiguration>(
                         authDomain,
                         new OpenIdConnectConfigurationRetriever());
-                openIdConfiguration = await configurationManager.GetConfigurationAsync(CancellationToken.None).ConfigureAwait(false);
+                _openIdConfiguration = await configurationManager.GetConfigurationAsync(CancellationToken.None).ConfigureAwait(false);
 
-                prevOpenIdConfigUpdateTimestamp = DateTime.Now;
+                _prevOpenIdConfigUpdateTimestamp = DateTime.Now;
             }
 
             // The incoming token should be issued by graph.
@@ -161,7 +119,7 @@ namespace RecordingBot.Services.Authentication
             {
                 ValidIssuers = authIssuers,
                 ValidAudience = _clientOptions.ClientId,
-                IssuerSigningKeys = openIdConfiguration.SigningKeys,
+                IssuerSigningKeys = _openIdConfiguration.SigningKeys,
             };
 
             ClaimsPrincipal claimsPrincipal;
@@ -200,12 +158,7 @@ namespace RecordingBot.Services.Authentication
         /// <summary>
         /// Acquires the token and retries if failure occurs.
         /// </summary>
-        /// <param name="context">The application context.</param>
-        /// <param name="resource">The resource.</param>
-        /// <param name="creds">The application credentials.</param>
-        /// <param name="attempts">The attempts.</param>
-        /// <returns>The <see cref="AuthenticationResult" />.</returns>
-        private async Task<AuthenticationResult> AcquireTokenWithRetryAsync(IConfidentialClientApplication context, int attempts)
+        private static async Task<AuthenticationResult> AcquireTokenWithRetryAsync(IConfidentialClientApplication context, int attempts)
         {
             while (true)
             {

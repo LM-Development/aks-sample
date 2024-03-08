@@ -1,16 +1,3 @@
-// ***********************************************************************
-// Assembly         : RecordingBot.Services
-// Author           : JasonTheDeveloper
-// Created          : 09-07-2020
-//
-// Last Modified By : dannygar
-// Last Modified On : 09-07-2020
-// ***********************************************************************
-// <copyright file="CaptureEvents.cs" company="Microsoft">
-//     Copyright ©  2020
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
 using Microsoft.Graph.Communications.Calls;
 using Microsoft.Graph.Communications.Resources;
 using Newtonsoft.Json;
@@ -27,11 +14,6 @@ using System.Threading.Tasks;
 
 namespace RecordingBot.Services.Util
 {
-    /// <summary>
-    /// Class CaptureEvents.
-    /// Implements the <see cref="RecordingBot.Services.Util.BufferBase{System.Object}" />
-    /// </summary>
-    /// <seealso cref="RecordingBot.Services.Util.BufferBase{System.Object}" />
     public class CaptureEvents : BufferBase<object>
     {
         private readonly string _path;
@@ -123,7 +105,7 @@ namespace RecordingBot.Services.Util
 
         public async Task Finalize()
         {
-            while (_buffer.Count > 0)
+            while (Buffer.Count > 0)
             {
                 await Task.Delay(200);
             }

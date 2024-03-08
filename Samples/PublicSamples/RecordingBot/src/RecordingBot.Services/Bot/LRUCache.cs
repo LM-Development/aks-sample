@@ -1,18 +1,3 @@
-// ***********************************************************************
-// Assembly         : RecordingBot.Services
-// Author           : JasonTheDeveloper
-// Created          : 09-07-2020
-//
-// Last Modified By : dannygar
-// Last Modified On : 08-17-2020
-// ***********************************************************************
-// <copyright file="LRUCache.cs" company="Microsoft Corporation">
-//     Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
-// </copyright>
-// <summary>Initialize the HttpConfiguration for OWIN</summary>
-// ***********************************************************************-
-
 using System;
 using System.Collections.Generic;
 
@@ -23,25 +8,19 @@ namespace RecordingBot.Services.Bot
     /// </summary>
     public class LRUCache
     {
-        private readonly int capacity;
+        private readonly int _capacity;
         /// <summary>
         /// LRU Cache.
         /// </summary>
-        private readonly Dictionary<uint, LinkedListNode<uint>> cache;
+        private readonly Dictionary<uint, LinkedListNode<uint>> _cache;
         
-        private readonly LinkedList<uint> lruList;
+        private readonly LinkedList<uint> _lruList;
         
         /// <summary>
         /// Maximum size of the LRU cache.
         /// </summary>
         public const uint Max = 10;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LRUCache" /> class.
-        /// Constructor for the LRU cache.
-        /// </summary>
-        /// <param name="capacity">Size ofthe cache.</param>
-        /// <exception cref="ArgumentException">capacity value too large; max value is {Max}</exception>
         public LRUCache(int capacity)
         {
             if (capacity > Max)
@@ -49,21 +28,21 @@ namespace RecordingBot.Services.Bot
                 throw new ArgumentException($"size value too large; max value is {Max}");
             }
 
-            this.capacity = capacity;
-            cache = new Dictionary<uint, LinkedListNode<uint>>(capacity);
-            lruList = new LinkedList<uint>();
+            _capacity = capacity;
+            _cache = new Dictionary<uint, LinkedListNode<uint>>(capacity);
+            _lruList = new LinkedList<uint>();
         }
 
         /// <summary>
         /// Gets the count of items in the cache.
         /// </summary>
         /// <value>The count.</value>
-        public int Count => cache.Count;
+        public int Count => _cache.Count;
 
         /// <inheritdoc/>
         public override string ToString()
         {
-            return "{" + string.Join(", ", lruList) + "}";
+            return "{" + string.Join(", ", _lruList) + "}";
         }
 
         /// <summary>
@@ -77,24 +56,24 @@ namespace RecordingBot.Services.Bot
         {
             evictedKey = null;
 
-            if (cache.TryGetValue(key, out var node))
+            if (_cache.TryGetValue(key, out var node))
             {
-                lruList.Remove(node);
-                lruList.AddFirst(node);
+                _lruList.Remove(node);
+                _lruList.AddFirst(node);
             }
             else
             {
-                if (cache.Count >= capacity)
+                if (_cache.Count >= _capacity)
                 {
-                    var lastNode = lruList.Last;
+                    var lastNode = _lruList.Last;
                     evictedKey = lastNode.Value;
-                    cache.Remove(lastNode.Value);
-                    lruList.RemoveLast();
+                    _cache.Remove(lastNode.Value);
+                    _lruList.RemoveLast();
                 }
 
                 node = new LinkedListNode<uint>(key);
-                cache.Add(key, node);
-                lruList.AddFirst(node);
+                _cache.Add(key, node);
+                _lruList.AddFirst(node);
             }
         }
 
@@ -106,10 +85,10 @@ namespace RecordingBot.Services.Bot
         /// <returns>True if item was removed.</returns>
         public bool TryRemove(uint key)
         {
-            if (cache.TryGetValue(key, out var node))
+            if (_cache.TryGetValue(key, out var node))
             {
-                cache.Remove(key);
-                lruList.Remove(node);
+                _cache.Remove(key);
+                _lruList.Remove(node);
                 return true;
             }
 

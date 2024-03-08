@@ -1,16 +1,3 @@
-﻿// ***********************************************************************
-// Assembly         : RecordingBot.Services
-// Author           : JasonTheDeveloper
-// Created          : 08-28-2020
-//
-// Last Modified By : dannygar
-// Last Modified On : 09-09-2020
-// ***********************************************************************
-// <copyright file="AzureSettings.cs" company="Microsoft Corporation">
-//     Copyright ©  2020 Microsoft Corporation. All rights reserved.
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
 using Microsoft.AspNetCore.Http;
 using Microsoft.Skype.Bots.Media;
 using RecordingBot.Model.Constants;
@@ -22,14 +9,10 @@ using System.Text.RegularExpressions;
 
 namespace RecordingBot.Services.ServiceSetup
 {
-    /// <summary>
-    /// Class AzureSettings.
-    /// Implements the <see cref="RecordingBot.Services.Contract.IAzureSettings" />
-    /// </summary>
-    /// <seealso cref="RecordingBot.Services.Contract.IAzureSettings" />
     public class AzureSettings : IAzureSettings
     {
         public string ServiceDnsName { get; set; }
+        public string ServicePath { get; set; } = "/";
         public string ServiceCname { get; set; }
         public string CertificateThumbprint { get; set; }
         public Uri CallControlBaseUrl { get; set; }
@@ -40,6 +23,7 @@ namespace RecordingBot.Services.ServiceSetup
         public int InstancePublicPort { get; set; }
         public int InstanceInternalPort { get; set; }
         public int CallSignalingPort { get; set; }
+        public int CallSignalingPublicPort {get;set;} = 443;
         public bool CaptureEvents { get; set; } = false;
         public string PodName { get; set; }
         public string MediaFolder { get; set; }
@@ -70,12 +54,9 @@ namespace RecordingBot.Services.ServiceSetup
                 _ = int.TryParse(Regex.Match(PodName, @"\d+$").Value, out podNumber);
             }
 
-#if DEBUG
-            CallControlBaseUrl = new Uri($"https://{ServiceCname}:{CallSignalingPort}/{podNumber}/{HttpRouteConstants.CallSignalingRoutePrefix}/{HttpRouteConstants.OnNotificationRequestRoute}");
-#else
-            CallControlBaseUrl = new Uri($"https://{ServiceCname}/{podNumber}/{HttpRouteConstants.CallSignalingRoutePrefix}/{HttpRouteConstants.OnNotificationRequestRoute}");
-#endif
-            PodPathBase = $"/{podNumber}";
+            // Create structured config objects for service.
+            CallControlBaseUrl = new Uri($"https://{ServiceCname}{(CallSignalingPublicPort != 443 ? ":" + CallSignalingPublicPort : "")}{ServicePath}{podNumber}/{HttpRouteConstants.CallSignalingRoutePrefix}/{HttpRouteConstants.OnNotificationRequestRoute}");
+            PodPathBase = $"{ServicePath}{podNumber}";
 
             MediaPlatformSettings = new MediaPlatformSettings
             {

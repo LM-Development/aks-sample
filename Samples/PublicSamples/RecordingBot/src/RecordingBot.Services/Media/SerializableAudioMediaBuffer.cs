@@ -1,16 +1,3 @@
-﻿// ***********************************************************************
-// Assembly         : RecordingBot.Services
-// Author           : JasonTheDeveloper
-// Created          : 09-07-2020
-//
-// Last Modified By : dannygar
-// Last Modified On : 08-17-2020
-// ***********************************************************************
-// <copyright file="SerializableAudioMediaBuffer.cs" company="Microsoft">
-//     Copyright ©  2020
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
 using Microsoft.Graph.Communications.Calls;
 using Microsoft.Graph.Models;
 using Microsoft.Skype.Bots.Media;
@@ -21,11 +8,6 @@ using System.Runtime.InteropServices;
 
 namespace RecordingBot.Services.Media
 {
-    /// <summary>
-    /// Class SerializableAudioMediaBuffer.
-    /// Implements the <see cref="System.IDisposable" />
-    /// </summary>
-    /// <seealso cref="System.IDisposable" />
     public class SerializableAudioMediaBuffer : IDisposable
     {
         public uint[] ActiveSpeakers { get; set; }
@@ -35,16 +17,16 @@ namespace RecordingBot.Services.Media
         public byte[] Buffer { get; set; }
         public SerializableUnmixedAudioBuffer[] SerializableUnmixedAudioBuffers { get; set; }
 
-        private readonly List<IParticipant> participants;
+        private readonly List<IParticipant> _participants;
 
         public SerializableAudioMediaBuffer()
         {
-            participants = [];
+            _participants = [];
         }
 
         public SerializableAudioMediaBuffer(AudioMediaBuffer buffer, List<IParticipant> participants)
         {
-            this.participants = participants;
+            this._participants = participants;
 
             Length = buffer.Length;
             ActiveSpeakers = buffer.ActiveSpeakers;
@@ -68,7 +50,7 @@ namespace RecordingBot.Services.Media
 
         private IParticipant GetParticipantFromMSI(uint msi)
         {
-            return participants.FirstOrDefault(w => !w.Resource.IsInLobby.HasValue && w.Resource.MediaStreams.Any(a => a.SourceId == msi.ToString()));
+            return _participants.FirstOrDefault(w => !w.Resource.IsInLobby.HasValue && w.Resource.MediaStreams.Any(a => a.SourceId == msi.ToString()));
         }
 
         public void Dispose()
@@ -89,7 +71,6 @@ namespace RecordingBot.Services.Media
 
             public SerializableUnmixedAudioBuffer()
             {
-
             }
 
             public SerializableUnmixedAudioBuffer(UnmixedAudioBuffer buffer, IParticipant participant)

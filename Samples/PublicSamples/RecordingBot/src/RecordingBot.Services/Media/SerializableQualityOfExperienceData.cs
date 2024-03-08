@@ -1,23 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : RecordingBot.Services
-// Author           : JasonTheDeveloper
-// Created          : 09-07-2020
-//
-// Last Modified By : dannygar
-// Last Modified On : 09-07-2020
-// ***********************************************************************
-// <copyright file="SerializableQualityOfExperienceData.cs" company="Microsoft">
-//     Copyright ©  2020
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
 using Microsoft.Skype.Bots.Media;
 
 namespace RecordingBot.Services.Media
 {
-    /// <summary>
-    /// Class SerializableAudioQualityOfExperienceData.
-    /// </summary>
     public class SerializableAudioQualityOfExperienceData
     {
         public string Id { get; }

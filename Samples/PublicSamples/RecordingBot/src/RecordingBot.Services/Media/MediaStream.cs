@@ -1,16 +1,3 @@
-﻿// ***********************************************************************
-// Assembly         : RecordingBot.Services
-// Author           : JasonTheDeveloper
-// Created          : 09-07-2020
-//
-// Last Modified By : dannygar
-// Last Modified On : 09-03-2020
-// ***********************************************************************
-// <copyright file="MediaStream.cs" company="Microsoft">
-//     Copyright ©  2020
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
 using Microsoft.Graph.Communications.Calls;
 using Microsoft.Graph.Communications.Common;
 using Microsoft.Graph.Communications.Common.Telemetry;
@@ -28,18 +15,12 @@ using System.Threading.Tasks.Dataflow;
 
 namespace RecordingBot.Services.Media
 {
-    /// <summary>
-    /// Class MediaStream.
-    /// Implements the <see cref="RecordingBot.Services.Contract.IMediaStream" />
-    /// </summary>
-    /// <seealso cref="RecordingBot.Services.Contract.IMediaStream" />
     public class MediaStream : IMediaStream
     {
         private readonly BufferBlock<SerializableAudioMediaBuffer> _buffer;
-        private readonly CancellationTokenSource _tokenSource;
+        private readonly CancellationTokenSource _tokenSource = new();
         private bool _isRunning = false;
         protected bool _isDraining;
-
         private readonly SemaphoreSlim _syncLock = new(1);
         private readonly string _mediaId;
         private readonly AzureSettings _settings;
@@ -48,12 +29,6 @@ namespace RecordingBot.Services.Media
         private readonly AudioProcessor _currentAudioProcessor;
         private CaptureEvents _capture;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MediaStream" /> class.
-        /// </summary>
-        /// <param name="settings">The settings.</param>
-        /// <param name="logger">The logger.</param>
-        /// <param name="mediaId">The media identifier.</param>
         public MediaStream(IAzureSettings settings, IGraphLogger logger, string mediaId)
         {
             _settings = (AzureSettings)settings;
@@ -61,7 +36,6 @@ namespace RecordingBot.Services.Media
             _mediaId = mediaId;
 
             _buffer = new BufferBlock<SerializableAudioMediaBuffer>(new DataflowBlockOptions { CancellationToken = _tokenSource.Token });
-            _tokenSource = new CancellationTokenSource();
             _currentAudioProcessor = new AudioProcessor(_settings);
 
             if (_settings.CaptureEvents)
@@ -70,11 +44,6 @@ namespace RecordingBot.Services.Media
             }
         }
 
-        /// <summary>
-        /// Appends the audio buffer.
-        /// </summary>
-        /// <param name="buffer">The buffer.</param>
-        /// <param name="participants">The participants.</param>
         public async Task AppendAudioBuffer(AudioMediaBuffer buffer, List<IParticipant> participants)
         {
             if (!_isRunning)
@@ -93,10 +62,6 @@ namespace RecordingBot.Services.Media
             }
         }
 
-        /// <summary>
-        /// Ends this instance.
-        /// </summary>
-        /// <returns>Task.</returns>
         public async Task End()
         {
             if (!_isRunning)
@@ -137,9 +102,6 @@ namespace RecordingBot.Services.Media
             _syncLock.Release();
         }
 
-        /// <summary>
-        /// Processes this instance.
-        /// </summary>
         private async Task Process()
         {
             if (_settings.CaptureEvents && !_isDraining && _capture == null)
@@ -193,10 +155,7 @@ namespace RecordingBot.Services.Media
             _isDraining = false;
         }
 
-        /// <summary>
-        /// Chunks the process.
-        /// </summary>
-        private async Task ChunkProcess()
+        async Task ChunkProcess()
         {
             try
             {

@@ -1,4 +1,4 @@
-﻿using Microsoft.Graph.Communications.Client;
+using Microsoft.Graph.Communications.Client;
 using Microsoft.Graph.Communications.Common;
 using Microsoft.Graph.Models;
 using System.Collections.Generic;
@@ -9,12 +9,12 @@ namespace RecordingBot.Model.Constants
 {
     public static class SerializerAssemblies
     {
-        private static IEnumerable<Assembly> _assemblies = new List<Assembly>
-            {
+        private static IEnumerable<Assembly> _assemblies =
+            [
                 typeof(Entity).Assembly,
                 typeof(Error).Assembly,
                 typeof(CommunicationsClientBuilder).Assembly
-            };
+            ];
 
         private static Assembly[] _distinctAssemblies = null;
 
@@ -24,8 +24,8 @@ namespace RecordingBot.Model.Constants
             {
                 if (_distinctAssemblies == null)
                 {
-                    HashSet<Assembly> hashSet = new HashSet<Assembly>();
-                    List<Assembly> list = new List<Assembly>();
+                    HashSet<Assembly> hashSet = [];
+                    List<Assembly> list = [];
                     _assemblies = _assemblies.Where(assembly => assembly != null);
                     foreach (Assembly item in _assemblies)
                     {
@@ -35,7 +35,7 @@ namespace RecordingBot.Model.Constants
                             hashSet.Add(item);
                         }
                     }
-                    _distinctAssemblies = list.ToArray();
+                    _distinctAssemblies = [.. list];
                 }
                 return _distinctAssemblies;
             }

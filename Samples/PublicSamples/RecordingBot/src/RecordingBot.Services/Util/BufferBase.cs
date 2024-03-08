@@ -1,16 +1,3 @@
-// ***********************************************************************
-// Assembly         : RecordingBot.Services
-// Author           : JasonTheDeveloper
-// Created          : 09-07-2020
-//
-// Last Modified By : dannygar
-// Last Modified On : 09-07-2020
-// ***********************************************************************
-// <copyright file="BufferBase.cs" company="Microsoft">
-//     Copyright ©  2020
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -19,43 +6,37 @@ using System.Threading.Tasks.Dataflow;
 
 namespace RecordingBot.Services.Util
 {
-    /// <summary>
-    /// Class BufferBase.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
     public abstract class BufferBase<T>
     {
-        protected readonly BufferBlock<T> _buffer;
-        private readonly CancellationTokenSource _tokenSource;
-        private bool _isRunning;
+        protected BufferBlock<T> Buffer;
+        protected CancellationTokenSource TokenSource;
+        protected bool IsRunning = false;
         private readonly SemaphoreSlim _syncLock = new(1);
 
         protected BufferBase()
         {
-            _buffer = new BufferBlock<T>();
-            _tokenSource = new CancellationTokenSource();
         }
 
         protected BufferBase(CancellationTokenSource token)
         {
-            _buffer = new BufferBlock<T>();
-            _tokenSource = token;
+            Buffer = new BufferBlock<T>();
+            TokenSource = token;
         }
 
         public async Task Append(T obj)
         {
-            if (!_isRunning)
+            if (!IsRunning)
             {
                 await Start();
             }
 
             try
             {
-                await _buffer.SendAsync(obj, _tokenSource.Token).ConfigureAwait(false);
+                await Buffer.SendAsync(obj, TokenSource.Token).ConfigureAwait(false);
             }
             catch (TaskCanceledException e)
             {
-                _buffer?.Complete();
+                Buffer?.Complete();
 
                 Debug.Write($"Cannot enqueue because queuing operation has been cancelled. Exception: {e}");
             }
@@ -64,23 +45,27 @@ namespace RecordingBot.Services.Util
         private async Task Start()
         {
             await _syncLock.WaitAsync().ConfigureAwait(false);
-            if (!_isRunning)
+            if (!IsRunning)
             {
+                TokenSource ??= new CancellationTokenSource();
+
+                Buffer = new BufferBlock<T>(new DataflowBlockOptions { CancellationToken = TokenSource.Token });
                 await Task.Factory.StartNew(Process).ConfigureAwait(false);
-                _isRunning = true;
+                IsRunning = true;
             }
             _syncLock.Release();
         }
 
         public virtual async Task End()
-        {
-            if (_isRunning)
+        {  
+            if (IsRunning)
             {
                 await _syncLock.WaitAsync().ConfigureAwait(false);
-                if (_isRunning)
+                if (IsRunning)
                 {
-                    _buffer.Complete();
-                    _isRunning = false;
+                    Buffer.Complete();
+                    TokenSource = null;
+                    IsRunning = false;
                 }
                 _syncLock.Release();
             }
@@ -90,13 +75,13 @@ namespace RecordingBot.Services.Util
         {
             try
             {
-                while (await _buffer.OutputAvailableAsync(_tokenSource.Token).ConfigureAwait(false))
+                while (await Buffer.OutputAvailableAsync(TokenSource.Token).ConfigureAwait(false))
                 {
-                    T data = await _buffer.ReceiveAsync(_tokenSource.Token).ConfigureAwait(false);
+                    T data = await Buffer.ReceiveAsync(TokenSource.Token).ConfigureAwait(false);
 
                     await Task.Run(() => Process(data)).ConfigureAwait(false);
 
-                    _tokenSource.Token.ThrowIfCancellationRequested();
+                    TokenSource.Token.ThrowIfCancellationRequested();
                 }
             }
             catch (TaskCanceledException ex)
