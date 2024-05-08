@@ -10,7 +10,8 @@ debugging the recording bot sample in our IDE.
 - [Git command line tool](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [AZ Azure command line tool](https://learn.microsoft.com/cli/azure/install-azure-cli-windows)
 - [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) (Community, Professional and Enterprise Edition work for this Tutorial)
-- [ngrok](https://ngrok.com/docs/guides/device-gateway/windows/)
+- [Ngrok](https://ngrok.com/docs/guides/device-gateway/windows/)
+  - We need a [ngrok account](https://dashboard.ngrok.com/signup) to be able to use ngrok
 - [Microsoft Entra Id Tenant](https://learn.microsoft.com/entra/fundamentals/create-new-tenant) [with Microsoft Teams users](https://learn.microsoft.com/entra/fundamentals/license-users-groups)
 - [Microsoft Azure Subscription](https://learn.microsoft.com/azure/cost-management-billing/manage/create-subscription)
   - The subscription in this tutorial is called `recordingbotsubscription`, also see [variables](#variables).
@@ -40,10 +41,12 @@ Throughout this tutorial we will create some azure resources. We also have some 
 create during the tutorial, eg. ngrok creates a unique fully qualified domain name for us. In the
 tutorial, note the placeholders and replace them with your own values.
 
-|    Variable Name    |   Value in the tutorial    |
-| ------------------- | -------------------------- |
-| Azure Subsciription | `recordingbotsubscription` |
-| ngrok authtoken     | _ajnbkwaoawerfavauhniluhn_ |
+|        Variable Name        |                  Value in the tutorial                   |
+| --------------------------- | -------------------------------------------------------- |
+| Azure Subsciription         | `recordingbotsubscription`                               |
+| ngrok authtoken             | _ajnbkwaoawerfavauhniluhn_                               |
+| ngrok https domain          | _https<span>://</span>zz99-99-9-99-999.ngrok-free.app_   |
+| ngrok tunnel configuration  | `C:\Users\User\.ngrok\recrdingtunnels.yaml`              |
 
 If you encounter any problems during the tutorial, please feel free to create an [issue](https://github.com/lm-development/aks-sample/issues).
 This means that the tutorial can be improved continously.
