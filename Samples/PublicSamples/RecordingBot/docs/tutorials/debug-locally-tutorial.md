@@ -45,8 +45,11 @@ tutorial, note the placeholders and replace them with your own values.
 | --------------------------- | -------------------------------------------------------- |
 | Azure Subsciription         | `recordingbotsubscription`                               |
 | ngrok authtoken             | _ajnbkwaoawerfavauhniluhn_                               |
-| ngrok https domain          | _https<span>://</span>zz99-99-9-99-999.ngrok-free.app_   |
-| ngrok tunnel configuration  | `C:\Users\User\.ngrok\recrdingtunnels.yaml`              |
+| ngrok https endpoint        | _https<span>://</span>zz99-99-9-99-999.ngrok-free.app_   |
+| ngrok tcp endpoint          | _tcp://4.tcp.eu.ngrok.io:65535_                          |
+| DNS CName entry name        | `recordingbot-local`                                     |
+| DNS name                    | `example.com`                                            |
+| Full CName with DNS name    | _recordingbot-local.example.com_                         |
 
 If you encounter any problems during the tutorial, please feel free to create an [issue](https://github.com/lm-development/aks-sample/issues).
 This means that the tutorial can be improved continously.
