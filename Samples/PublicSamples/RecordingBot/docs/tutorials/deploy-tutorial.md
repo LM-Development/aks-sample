@@ -31,6 +31,7 @@ administrator and always log in as such unless the tutorial requires otherwise.
 5. [Deploy recording sample to AKS cluster](./deploy/5-helm.md)
 6. [Create and assign a Recording Policy](./deploy/6-policy.md)
 7. [Verify functionality](./deploy/7-test.md)
+8. [Clean up Azure resources](./deploy/8-cleanup.md)
 
 ## Variables
 

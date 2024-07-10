@@ -16,4 +16,5 @@ After we successfully set up a test call we should see the a banner in both of o
 ![Recording Banner](../../images/screenshot-recording-banner.png)
 
 Congratulations, we deployed and successfully configured a Compliance Recording Bot, in the next
-steps we can customize the Recording Bot Application to meet our custom use-cases.
+steps we can customize the Recording Bot Application to meet our custom use-cases. Or, if we wish
+to delete the resources, we can continue with [cleaning up Azure resources](./8-cleanup.md).
