@@ -46,7 +46,7 @@ tutorial, note the placeholders and replace them with your own values.
 | Azure Subsciription         | `recordingbotsubscription`                               |
 | ngrok authtoken             | _ajnbkwaoawerfavauhniluhn_                               |
 | ngrok https endpoint        | _https<span>://</span>zz99-99-9-99-999.ngrok-free.app_   |
-| ngrok tcp endpoint          | _tcp://4.tcp.eu.ngrok.io:65535_                          |
+| ngrok tcp endpoint          | _tcp://0.tcp.eu.ngrok.io:65535_                          |
 | DNS CName entry name        | `recordingbot-local`                                     |
 | DNS name                    | `example.com`                                            |
 | Full CName with DNS name    | _recordingbot-local.example.com_                         |

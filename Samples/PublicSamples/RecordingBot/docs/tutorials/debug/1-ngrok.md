@@ -33,7 +33,7 @@ To edit the configuration of ngrok we run
 ngrok config edit
 ```
 
-Into the file that opens in our default editor we add the following lines at the end:
+Into the file that opens in our default editor we append the following lines:
 
 ```yaml
 tunnels:
@@ -46,6 +46,10 @@ tunnels:
 ```
 
 We save the file and close our editor.
+
+> [!Note]  
+> If we already have some tunnels in our configuration file, we just need to make sure the
+> _notifications_ and _media_ tunnels are both listed in our configuration.
 
 ## Start ngrok
 
@@ -67,24 +71,30 @@ Region                        Europe (eu)
 Latency                       125ms
 Web Interface                 http://127.0.0.1:4040
 Forwarding                    https://zz99-99-9-99-999.ngrok-free.app -> http://localhost:9442
-Forwarding                    tcp://4.tcp.eu.ngrok.io:65535 -> localhost:8445
+Forwarding                    tcp://0.tcp.eu.ngrok.io:65535 -> localhost:8445
 
 Connections                   ttl     opn     rt1     rt5     p50     p90
                               0       0       0.00    0.00    0.00    0.00
 ```
 
-As we need some of the output in the next steps we note down the two forwarding addresses, in the
-example output these adresses are _https<span>://</span>zz99-99-9-99-999.ngrok-free.app_ and
-_tcp://4.tcp.eu.ngrok.io:65535_. We also need to keep our terminal window open, as long our
-terminal window is the tunnels exist.
+Since we will need some of the output in the next steps, we will note down the two forwarding
+addresses. In the example output, these addresses are:
+_https<span>://</span>zz99-99-9-99-999.ngrok-free.app_ and _tcp://0.tcp.eu.ngrok.io:65535_.
+We also need to keep our terminal window open because as long as our terminal window is open,
+the tunnels are available.
+
+> [!Note]
+> Some tcp adresses of ngrok seem not to work([see](https://github.com/microsoftgraph/microsoft-graph-comms-samples/issues/405#issuecomment-787608319))
+> with the bot. To avoid problems, we can restart nkrok until we get a
+> `0` or `1` tcp adress from ngrok.
 
 ## Configure CName Entry
 
-In the next step we create a CName entry on our Domain, checkout how to do this on your DNS
+In this step we create a CName entry on our Domain, checkout how to do this on your DNS
 provider. As name in the example we choose `recordingbot-local` so the fully qualified domain name
 to our CName entry will be : _recoridingbot-local.example.com_. As the target domain for our CName
-entry we use the tcp ngrok domain we noted down previously, in our example it is _4.tcp.eu.ngrok.io_.
-So after we setup our DNS CName entry, _recordingbot-local.example.com_ points to _4.tcp.eu.ngrok.io_.
+entry we use the tcp ngrok domain we noted down previously, in our example it is _0.tcp.eu.ngrok.io_.
+So after we setup our DNS CName entry, _recordingbot-local.example.com_ points to _0.tcp.eu.ngrok.io_.
 
 After we successfully setup our ngrok tunnels and the CName entry we can continue with [getting a
-Certificate for the domain name we just created](./2-certificate.md)
+Certificate](./2-certificate.md)
