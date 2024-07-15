@@ -41,15 +41,19 @@ Throughout this tutorial we will create some azure resources. We also have some 
 create during the tutorial, eg. ngrok creates a unique fully qualified domain name for us. In the
 tutorial, note the placeholders and replace them with your own values.
 
-|        Variable Name        |                  Value in the tutorial                   |
-| --------------------------- | -------------------------------------------------------- |
-| Azure Subsciription         | `recordingbotsubscription`                               |
-| ngrok authtoken             | _ajnbkwaoawerfavauhniluhn_                               |
-| ngrok https endpoint        | _https<span>://</span>zz99-99-9-99-999.ngrok-free.app_   |
-| ngrok tcp endpoint          | _tcp://0.tcp.eu.ngrok.io:65535_                          |
-| DNS CName entry name        | `recordingbot-local`                                     |
-| DNS name                    | `example.com`                                            |
-| Full CName with DNS name    | _recordingbot-local.example.com_                         |
+|        Variable Name        |                     Value in the tutorial                     |
+| --------------------------- | ------------------------------------------------------------- |
+| Azure Subsciription         | `recordingbotsubscription`                                    |
+| ngrok authtoken             | _ajnbkwaoawerfavauhniluhn_                                    |
+| ngrok https endpoint        | _https<span>://</span>zz99-99-9-99-999.ngrok-free.app_        |
+| ngrok tcp endpoint          | _tcp://0.tcp.eu.ngrok.io:65535_                               |
+| DNS CName entry name        | `recordingbot-local`                                          |
+| DNS name                    | `example.com`                                                 |
+| Full CName with DNS name    | _recordingbot-local.example.com_                              |
+| Full ACME TXT DNS Name      | _ _acme-challenge._`recordingbot-local.example.com`           |
+| ACME TXT DNS Value          | _sp5cMJWgqECk7DPy9kvVZ80s2dkI9IEUDVy8Il8St5o_                 |
+| Certificate Key Path        | _C:\Certbot\live\recordingbot-local.example.com\privkey.pem_  |
+| Certificate Path            | _C:\Certbot\live\recordingbot-local.example.com\fullchain.pem_|
 
 If you encounter any problems during the tutorial, please feel free to create an [issue](https://github.com/lm-development/aks-sample/issues).
 This means that the tutorial can be improved continously.

@@ -48,7 +48,7 @@ tunnels:
 We save the file and close our editor.
 
 > [!Note]  
-> If we already have some tunnels in our configuration file, we just need to make sure the
+> If we already have some tunnels in our configuration file, we need to make sure the
 > _notifications_ and _media_ tunnels are both listed in our configuration.
 
 ## Start ngrok
