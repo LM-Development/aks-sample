@@ -47,7 +47,7 @@ tunnels:
 
 We save the file and close our editor.
 
-> [!Note]  
+> [!NOTE]  
 > If we already have some tunnels in our configuration file, we need to make sure the
 > _notifications_ and _media_ tunnels are both listed in our configuration.
 
@@ -83,8 +83,8 @@ _https<span>://</span>zz99-99-9-99-999.ngrok-free.app_ and _tcp://0.tcp.eu.ngrok
 We also need to keep our terminal window open because as long as our terminal window is open,
 the tunnels are available.
 
-> [!Note]
-> Some tcp adresses of ngrok seem not to work([see](https://github.com/microsoftgraph/microsoft-graph-comms-samples/issues/405#issuecomment-787608319))
+> [!NOTE]
+> Some tcp adresses of ngrok seem not to work([see this](https://github.com/microsoftgraph/microsoft-graph-comms-samples/issues/405#issuecomment-787608319))
 > with the bot. To avoid problems, we can restart nkrok until we get a
 > `0` or `1` tcp adress from ngrok.
 

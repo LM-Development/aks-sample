@@ -80,7 +80,7 @@ value(s) you've just added.
 Press Enter to Continue
 ```
 
-> [!INFO]  
+> [!NOTE]  
 > If you already used Certbot previously, it should directly show the last output.
 
 ## Set DNS TXT Entry for ACME challenge
@@ -126,7 +126,7 @@ Note down the paths, where the key and the certificate is stored, as we need the
 In our example this is _C:\Certbot\live\recordingbot-local.example.com\fullchain.pem_ and
 _C:\Certbot\live\recordingbot-local.example.com\privkey.pem_.
 
-> [!INFO]  
+> [!NOTE]  
 > The output also displays a certificate expiration date. The steps to retrieve a certificate must
 > be performed again by this date at the latest, but can be performed earlier. If the certificate
 > expires it is not valid anymore and debugging locally doesn't work anymore.
