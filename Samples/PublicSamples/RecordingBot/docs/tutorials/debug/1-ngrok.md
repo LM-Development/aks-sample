@@ -96,5 +96,11 @@ to our CName entry will be : _recoridingbot-local.example.com_. As the target do
 entry we use the tcp ngrok domain we noted down previously, in our example it is _0.tcp.eu.ngrok.io_.
 So after we setup our DNS CName entry, _recordingbot-local.example.com_ points to _0.tcp.eu.ngrok.io_.
 
+> [!NOTE]  
+> Since the forwarding address for TCP may change after restarting the tunnel, you need to make
+> sure that your DNS record points to the DNS domain used by ngrok for TCP. This means that after
+> starting the tunnel, you may need to change your DNS CName record, or restart the tunnel until
+> you get the tunnel used in your DNS record.
+
 After we successfully setup our ngrok tunnels and the CName entry we can continue with [getting a
 Certificate](./2-certificate.md)

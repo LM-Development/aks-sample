@@ -133,4 +133,40 @@ _C:\Certbot\live\recordingbot-local.example.com\privkey.pem_.
 
 ## Convert Certificate to pfx
 
+In windows we can only install pkcs12 certificates, so we need to convert the
+certificate from certbot. To be able to do that with openssl we need a third certificate file that
+was not listed by Certbot but also created. The third file can be found at the same folder as the
+other two and is named cert.pem, so the full path of that file is:
+_C:\Certbot\live\recordingbot-local.example.com\cert.pem_. With that located we can run:
+
+``` pwsh
+openssl pkcs12 -export
+    -out C:\certificate.pfx
+    -in C:\Certbot\live\recordingbot-local.example.com\cert.pem
+    -inkey C:\Certbot\live\recordingbot-local.example.com\privkey.pem
+    -certfile C:\Certbot\live\recordingbot-local.example.com\fullchain.pem
+```
+
+The resulting output:
+
+``` text
+Enter Export Password:
+```
+
+asks for a password we want to use for the exported certificate, to make it simple we do not enter
+any password and direktly press Enter.
+
+``` text
+Verifying - Enter Export Password:
+```
+
+OpenSSL will then ask us to confirm our password. Since it is empty, we can directly press Enter again.
+
+After that, OpenSSL should exit without any further output and we should find a new file at
+_C:\certificate.pfx_ as we specified in the instruction to OpenSSL.
+
 ## Install Certficate into Windows Certificate Store
+
+In this step we will install the certificate in the Windows certificate store. To do so we open the
+file explorer at the path of our certficate file(in our case `C:/`) and double klick the
+`certificate.pfx`-file. This should open the following window:
