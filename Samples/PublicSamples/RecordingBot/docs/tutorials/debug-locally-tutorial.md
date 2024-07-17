@@ -56,6 +56,7 @@ tutorial, note the placeholders and replace them with your own values.
 | Certificate Full Chain Path | _C:\Certbot\live\recordingbot-local.example.com\fullchain.pem_|
 | Certificate Path            | _C:\Certbot\live\recordingbot-local.example.com\cert.pem_     |
 | PFX Certificate Path        | `C:/certificate.pfx`                                          |
+| Certificate Thumbprint      | _163F8FBC27610B6D45BD7CB7B3BDD3FDF78DA482_                    |
 
 If you encounter any problems during the tutorial, please feel free to create an [issue](https://github.com/lm-development/aks-sample/issues).
 This means that the tutorial can be improved continously.

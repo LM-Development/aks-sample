@@ -127,9 +127,9 @@ In our example this is _C:\Certbot\live\recordingbot-local.example.com\fullchain
 _C:\Certbot\live\recordingbot-local.example.com\privkey.pem_.
 
 > [!NOTE]  
-> The output also displays a certificate expiration date. The steps to retrieve a certificate must
-> be performed again by this date at the latest, but can be performed earlier. If the certificate
-> expires it is not valid anymore and debugging locally doesn't work anymore.
+> The output also displays a certificate expiration date. If the certificate expires it is not
+> valid anymore and debugging locally doesn't work anymore. To avoid this you can renew you're
+> certificate by redoing this and the following steps.
 
 ## Convert Certificate to pfx
 
@@ -170,3 +170,59 @@ _C:\certificate.pfx_ as we specified in the instruction to OpenSSL.
 In this step we will install the certificate in the Windows certificate store. To do so we open the
 file explorer at the path of our certficate file(in our case `C:/`) and double klick the
 `certificate.pfx`-file. This should open the following window:
+
+![certificate import wizard step 1](../../images/screenshot-certificate-import-wizard-1.png)
+
+There we have to make sure that we select _Local Machine_ and then we can continue by clicking on
+the _Next_ button. Windows will then ask us for administrator rights to install the certificate for
+the local computer, which we accept. After that we should see the next page of the certificate
+import wizard:
+
+![certificate import wizard step 2](../../images/screenshot-certificate-import-wizard-2.png)
+
+There the certificate import wizard asks us for the source file that we want to import. As we
+opended the import wizard from the certificate directly, this should be already filled with the
+Path to our certificate `C:\certificate.pfx` so we can continue by pressing the _Next_ button.
+
+![certificate import wizard step 3](../../images/screenshot-certificate-import-wizard-3.png)
+
+In this step of the certificate import wizard we can enter the password that protects the private-
+key of our certficate and specify some import options for the certificate. Since we didn't specify
+any password in openssl we do not need to enter any password, we can keep the import settings as
+they are and directly click the _Next_ button.
+
+![certificate import wizard step 4](../../images/screenshot-certificate-import-wizard-4.png)
+
+In this step of the certificate import wizard, we are asked if we want to specify a certificate
+store. We can leave the option as is and let the wizard automatically select a store based on the
+certificate type and then click the _Next_ button.
+
+![certificate import wizard step 4](../../images/screenshot-certificate-import-wizard-5.png)
+
+Finally, the certificate import wizard will show us a summary of the settings we specified
+previously. To complete the import, we click the _Finish_ button and we should see the following
+message box:
+
+![certificate import successful](../../images/screenshot-certificate-import-wizard-6.png)
+
+## Get Certificate Thumbprint
+
+As a final step with the certificate, we need to get the thumbprint of the certificate. The
+thumbprint will later be passed to the recording application, which will use the thumbprint to load
+the certificate from the certificate store. To get the thumbprint of the certificate, we run the
+following command in a privileged powershell terminal:
+
+``` pwsh
+(Get-PfxCertificate -FilePath C:\certificate.pfx).Thumbprint
+```
+
+The resulting output should look similar to:
+
+``` text
+163F8FBC27610B6D45BD7CB7B3BDD3FDF78DA482
+```
+
+The output is the thumbprint of our certificate, we save this value for later.
+
+Now we have installed a certificate with a valid certificate chain to one of the valid root
+certificates and we can proceed with [creating a bot service with app registration and permissions](./3-bot-service.md).
