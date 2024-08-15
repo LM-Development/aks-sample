@@ -3,6 +3,7 @@ name: Docker Image Scan
 on:
   schedule:
     - cron: '0 0 * * 1'  # Jeden Montag um 00:00 Uhr
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -15,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4    
+        uses: actions/checkout@v4
 		  
       - name: Run Trivy Scan
         uses: aquasecurity/trivy-action@0.20.0
