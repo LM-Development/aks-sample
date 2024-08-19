@@ -12,9 +12,9 @@
 name: Anchore Grype vulnerability scan
 
 on:
-  push:
-    branches:
-      - main
+  registry_package:
+    types:
+      - [published]
     paths:
       - Samples/PublicSamples/RecordingBot/**
  
