@@ -12,14 +12,10 @@
 name: Anchore Grype vulnerability scan
 
 on:
-  registry_package:
-    types:
-      - [published]
-    paths:
-      - Samples/PublicSamples/RecordingBot/**
- 
   schedule:
     - cron: '0 0 * * 1'  # Jeden Montag um 00:00 Uhr
+  registry_package:
+    types: [published]
   workflow_dispatch:
 
 permissions:
