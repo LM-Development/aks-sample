@@ -10,7 +10,7 @@ WORKDIR /src/RecordingBot.Console
 RUN dotnet build RecordingBot.Console.csproj --arch x64 --self-contained --configuration Release --output C:\app 
 
 
-FROM mcr.microsoft.com/windows/server:ltsc2022
+FROM mcr.microsoft.com/windows/server:10.0.20348.2655
 SHELL ["powershell", "-Command"]
 
 ADD https://aka.ms/vs/17/release/vc_redist.x64.exe /bot/VC_redist.x64.exe
