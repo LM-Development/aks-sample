@@ -126,8 +126,6 @@ spec:
       - name: certificate
         secret:
           secretName: {{ include "ingress.tls.secretName" . }}
-      imagePullSecrets:
-      - name: acr-secret
   selector:
     matchLabels:
       app: {{ $fullName }}
