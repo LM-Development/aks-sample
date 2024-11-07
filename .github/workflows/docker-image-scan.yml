@@ -3,6 +3,7 @@ name: Docker Image Scan
 on:
   schedule:
     - cron: '0 0 * * 1'  # Jeden Montag um 00:00 Uhr
+    - cron: '0 0 * * 5'  # Jeden Freitag um 00:00 Uhr
   workflow_dispatch:
   push:
     branches:
@@ -19,13 +20,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Trivy Scan
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: 'ghcr.io/lm-development/aks-sample/aks-sample:latest'
           format: 'sarif'
           output: 'trivy-results.sarif'
-  
+        continue-on-error: true
+        
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: 'trivy-results.sarif'
+          
+      - name: Display Trivy scan logs
+        if: failure()
+        run: cat trivy-result.sarif
