@@ -24,13 +24,12 @@ jobs:
           image-ref: 'ghcr.io/lm-development/aks-sample/aks-sample:latest'
           format: 'sarif'
           output: 'trivy-results.sarif'
-        continue-on-error: true
         
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
           
       - name: Display Trivy scan logs
         if: failure()
-        run: cat trivy-result.sarif
+        run: cat trivy-results.sarif
