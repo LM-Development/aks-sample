@@ -25,6 +25,8 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
+        env:
+          TRIVY_RATE_LIMIT: 10
         continue-on-error: true
 
       - name: Check Trivy Scan Result
