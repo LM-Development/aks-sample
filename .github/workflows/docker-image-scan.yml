@@ -24,7 +24,6 @@ jobs:
           image-ref: 'ghcr.io/lm-development/aks-sample/aks-sample:latest'
           format: 'sarif'
           output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
 
       - name: Check Trivy Scan Result
         if: always()
