@@ -30,8 +30,21 @@ jobs:
       - name: Run Trivy Scan
         run: |
           trivy image --format sarif --output trivy-results.sarif ghcr.io/lm-development/aks-sample/aks-sample:latest
+      
+      - name: Check Trivy Scan Result
+        if: always()
+        run: |
+          if grep -q "Vulnerability" trivy-results.sarif; then
+            echo "Vulnerabilities found"
+          else
+            echo "No vulnerabilities found"
+          fi
                 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
+
+      - name: Display Trivy scan logs
+        if: always()
+        run: cat trivy-results.sarif
