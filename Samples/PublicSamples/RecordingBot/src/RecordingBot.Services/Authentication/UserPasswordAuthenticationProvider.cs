@@ -28,16 +28,16 @@ namespace RecordingBot.Services.Authentication
         }
 
         /// <inheritdoc />
-        public async Task AuthenticateOutboundRequestAsync(HttpRequestMessage request, string tenantId)
+        public async Task AuthenticateOutboundRequestAsync(HttpRequestMessage request, string tenant)
         {
-            Debug.Assert(!string.IsNullOrWhiteSpace(tenantId), $"Invalid {nameof(tenantId)}.");
+            Debug.Assert(!string.IsNullOrWhiteSpace(tenant), $"Invalid {nameof(tenant)}.");
 
             const string BearerPrefix = "Bearer";
             const string ReplaceString = "{tenant}";
             const string TokenAuthorityMicrosoft = "https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token";
             const string Resource = @"https://graph.microsoft.com/.default";
 
-            var tokenLink = TokenAuthorityMicrosoft.Replace(ReplaceString, tenantId);
+            var tokenLink = TokenAuthorityMicrosoft.Replace(ReplaceString, tenant);
             OAuthResponse authResult = null;
 
             try
