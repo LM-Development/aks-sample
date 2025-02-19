@@ -74,7 +74,7 @@ namespace RecordingBot.Services.ServiceSetup
             // Initialize Audio Settings
             AudioSettings = new AudioSettings
             {
-                WavSettings = (WAVSampleRate > 0) ? new WAVSettings(WAVSampleRate, WAVQuality) : null
+                WavSettings = (WAVSampleRate > 0) ? new WavSettings(WAVSampleRate, WAVQuality) : null
             };
         }
 
