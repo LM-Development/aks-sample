@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Authentication;
 using System.Threading.Tasks;
 
 namespace RecordingBot.Services.Authentication
@@ -55,7 +56,7 @@ namespace RecordingBot.Services.Authentication
 
                 if (!result.IsSuccessStatusCode)
                 {
-                    throw new Exception("Failed to generate user token.");
+                    throw new AuthenticationException("Failed to generate user token.");
                 }
 
                 var content = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
