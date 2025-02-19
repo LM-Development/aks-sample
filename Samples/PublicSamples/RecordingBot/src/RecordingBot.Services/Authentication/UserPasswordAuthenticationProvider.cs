@@ -82,7 +82,7 @@ namespace RecordingBot.Services.Authentication
 
         private class OAuthResponse
         {
-            public string Access_Token { get; set; }
+            public string Access_Token { get; }
             public int Expires_In { get; set; }
         }
     }
