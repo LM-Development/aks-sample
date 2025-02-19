@@ -80,7 +80,7 @@ namespace RecordingBot.Services.Authentication
             throw new NotImplementedException();
         }
 
-        private class OAuthResponse
+        private sealed class OAuthResponse
         {
             public string Access_Token { get; }
             public int Expires_In { get; }
