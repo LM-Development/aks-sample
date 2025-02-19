@@ -10,7 +10,7 @@ namespace RecordingBot.Services.Bot
     {
         private readonly Timer _heartbeatTimer;
 
-        public HeartbeatHandler(TimeSpan frequency, IGraphLogger logger)
+        protected HeartbeatHandler(TimeSpan frequency, IGraphLogger logger)
             : base(logger)
         {
             // initialize the timer

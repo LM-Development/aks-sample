@@ -12,8 +12,8 @@ namespace RecordingBot.Model.Extension
 
         public static Uri GetUri(this HttpRequest request)
         {
-            ArgumentNullException.ThrowIfNull(request, nameof(request));
-            ArgumentException.ThrowIfNullOrWhiteSpace(request.Scheme, nameof(request.Scheme));
+            ArgumentNullException.ThrowIfNull(request);
+            ArgumentException.ThrowIfNullOrWhiteSpace(request.Scheme);
 
             return new Uri(GetUrl(request));
         }

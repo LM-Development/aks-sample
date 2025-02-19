@@ -18,8 +18,6 @@ namespace RecordingBot.Services.ServiceSetup
 {
     public class AppHost
     {
-        private IGraphLogger _logger;
-
         private IServiceProvider ServiceProvider { get; set; }
         public static AppHost AppHostInstance { get; private set; }
 
@@ -66,8 +64,6 @@ namespace RecordingBot.Services.ServiceSetup
             var app = builder.Build();
 
             ServiceProvider = app.Services;
-
-            _logger = Resolve<IGraphLogger>();
 
             try
             {

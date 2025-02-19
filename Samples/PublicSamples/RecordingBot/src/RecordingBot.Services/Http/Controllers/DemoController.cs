@@ -5,6 +5,7 @@ using RecordingBot.Services.Contract;
 using RecordingBot.Services.ServiceSetup;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace RecordingBot.Services.Http.Controllers
@@ -37,9 +38,8 @@ namespace RecordingBot.Services.Http.Controllers
             _eventPublisher.Publish("GetCalls", "Getting calls");
 
             List<Dictionary<string, string>> calls = [];
-            foreach (var callHandler in _botService.CallHandlers.Values)
+            foreach (var call in _botService.CallHandlers.Values.Select(handler => handler.Call))
             {
-                var call = callHandler.Call;
                 var callPath = "/" + HttpRouteConstants.CALL_ROUTE.Replace("{callLegId}", call.Id);
                 var callUri = new Uri(_settings.CallControlBaseUrl, callPath).AbsoluteUri;
                 var values = new Dictionary<string, string>

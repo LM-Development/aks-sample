@@ -6,22 +6,21 @@ using System;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Authentication;
 using System.Threading.Tasks;
 
 namespace RecordingBot.Services.Authentication
 {
     public class UserPasswordAuthenticationProvider : ObjectRoot, IRequestAuthenticationProvider
     {
-        private readonly string _appName;
         private readonly string _appId;
         private readonly string _appSecret;
         private readonly string _userName;
         private readonly string _password;
 
-        public UserPasswordAuthenticationProvider(string appName, string appId, string appSecret, string userName, string password, IGraphLogger logger)
+        public UserPasswordAuthenticationProvider(string appId, string appSecret, string userName, string password, IGraphLogger logger)
             : base(logger.NotNull(nameof(logger)).CreateShim(nameof(UserPasswordAuthenticationProvider)))
         {
-            _appName = appName.NotNullOrWhitespace(nameof(appName));
             _appId = appId.NotNullOrWhitespace(nameof(appId));
             _appSecret = appSecret.NotNullOrWhitespace(nameof(appSecret));
 
@@ -30,16 +29,16 @@ namespace RecordingBot.Services.Authentication
         }
 
         /// <inheritdoc />
-        public async Task AuthenticateOutboundRequestAsync(HttpRequestMessage request, string tenantId)
+        public async Task AuthenticateOutboundRequestAsync(HttpRequestMessage request, string tenant)
         {
-            Debug.Assert(!string.IsNullOrWhiteSpace(tenantId), $"Invalid {nameof(tenantId)}.");
+            Debug.Assert(!string.IsNullOrWhiteSpace(tenant), $"Invalid {nameof(tenant)}.");
 
             const string BearerPrefix = "Bearer";
             const string ReplaceString = "{tenant}";
             const string TokenAuthorityMicrosoft = "https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token";
             const string Resource = @"https://graph.microsoft.com/.default";
 
-            var tokenLink = TokenAuthorityMicrosoft.Replace(ReplaceString, tenantId);
+            var tokenLink = TokenAuthorityMicrosoft.Replace(ReplaceString, tenant);
             OAuthResponse authResult = null;
 
             try
@@ -57,7 +56,7 @@ namespace RecordingBot.Services.Authentication
 
                 if (!result.IsSuccessStatusCode)
                 {
-                    throw new Exception("Failed to generate user token.");
+                    throw new AuthenticationException("Failed to generate user token.");
                 }
 
                 var content = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -81,10 +80,11 @@ namespace RecordingBot.Services.Authentication
             throw new NotImplementedException();
         }
 
-        private class OAuthResponse
+        [Serializable]
+        private sealed class OAuthResponse
         {
-            public string Access_Token { get; set; }
-            public int Expires_In { get; set; }
+            public string Access_Token { get; }
+            public int Expires_In { get; }
         }
     }
 }

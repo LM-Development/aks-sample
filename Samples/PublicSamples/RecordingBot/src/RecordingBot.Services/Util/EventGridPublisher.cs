@@ -22,7 +22,7 @@ namespace RecordingBot.Services.Util
             _regionName = settings.RegionName;
         }
 
-        public void Publish(string subject, string message, string topicName)
+        public void Publish(string subject, string message, string topicName = "")
         {
             if (!string.IsNullOrWhiteSpace(_topicKey))
             {

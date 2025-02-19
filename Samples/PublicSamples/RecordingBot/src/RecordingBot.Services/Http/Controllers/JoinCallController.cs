@@ -48,7 +48,7 @@ namespace RecordingBot.Services.Http.Controllers
 
                 _eventPublisher.Publish("JoinCall", $"Call.id = {call.Id}");
 
-                return Ok(new JoinURLResponse
+                return Ok(new JoinUrlResponse
                 {
                     Call = callUri,
                     CallId = call.Id,

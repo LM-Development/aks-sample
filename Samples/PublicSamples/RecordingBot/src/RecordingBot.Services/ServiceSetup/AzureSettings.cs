@@ -74,7 +74,7 @@ namespace RecordingBot.Services.ServiceSetup
             // Initialize Audio Settings
             AudioSettings = new AudioSettings
             {
-                WavSettings = (WAVSampleRate > 0) ? new WAVSettings(WAVSampleRate, WAVQuality) : null
+                WavSettings = (WAVSampleRate > 0) ? new WavSettings(WAVSampleRate, WAVQuality) : null
             };
         }
 
@@ -92,7 +92,10 @@ namespace RecordingBot.Services.ServiceSetup
 
                 if (certs.Count != 1)
                 {
-                    throw new Exception($"No certificate with thumbprint {CertificateThumbprint} was found in the machine store.");
+                    throw new CertNotFoundException($"No certificate with thumbprint {CertificateThumbprint} was found in the machine store.")
+                    {
+                        Thumbprint = CertificateThumbprint
+                    };
                 }
 
                 return certs[0];

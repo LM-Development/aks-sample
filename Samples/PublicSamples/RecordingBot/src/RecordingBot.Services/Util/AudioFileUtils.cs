@@ -37,7 +37,7 @@ namespace RecordingBot.Services.Util
             return outputFilePath;
         }
 
-        public static string ResampleAudio(string audioFilePath, WAVSettings resamplerSettings, bool convertToStereo)
+        public static string ResampleAudio(string audioFilePath, WavSettings resamplerSettings, bool convertToStereo)
         {
             var stereoFlag = (convertToStereo)? $"-{STEREO}" : "";
             var outFile = audioFilePath[..^4] + audioFilePath[^4..].Replace(".wav", $"-{resamplerSettings.SampleRate / 1000}kHz{stereoFlag}.wav");

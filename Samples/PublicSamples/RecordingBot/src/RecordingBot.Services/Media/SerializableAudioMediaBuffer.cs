@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 
 namespace RecordingBot.Services.Media
 {
-    public class SerializableAudioMediaBuffer : IDisposable
+    public sealed class SerializableAudioMediaBuffer : IDisposable
     {
         private readonly List<IParticipant> _participants;
 
