@@ -181,12 +181,9 @@ namespace RecordingBot.Services.Bot
                 {
                     json = UpdateParticipant(BotMediaStream.participants, participant, added, participantDetails.DisplayName);
                 }
-                else if (participant.Resource.Info.Identity.AdditionalData?.Count > 0)
+                else if (participant.Resource.Info.Identity.AdditionalData?.Count > 0 && CheckParticipantIsUsable(participant))
                 {
-                    if (CheckParticipantIsUsable(participant))
-                    {
-                        json = UpdateParticipant(BotMediaStream.participants, participant, added);
-                    }
+                    json = UpdateParticipant(BotMediaStream.participants, participant, added);
                 }
 
                 if (json.Length > 0)
