@@ -13,7 +13,7 @@ namespace RecordingBot.Model.Extension
         public static Uri GetUri(this HttpRequest request)
         {
             ArgumentNullException.ThrowIfNull(request);
-            ArgumentException.ThrowIfNullOrWhiteSpace(request.Scheme, nameof(request.Scheme));
+            ArgumentException.ThrowIfNullOrWhiteSpace(request.Scheme);
 
             return new Uri(GetUrl(request));
         }
