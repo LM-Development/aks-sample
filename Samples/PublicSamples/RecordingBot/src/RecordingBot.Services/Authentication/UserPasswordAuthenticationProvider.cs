@@ -12,16 +12,14 @@ namespace RecordingBot.Services.Authentication
 {
     public class UserPasswordAuthenticationProvider : ObjectRoot, IRequestAuthenticationProvider
     {
-        private readonly string _appName;
         private readonly string _appId;
         private readonly string _appSecret;
         private readonly string _userName;
         private readonly string _password;
 
-        public UserPasswordAuthenticationProvider(string appName, string appId, string appSecret, string userName, string password, IGraphLogger logger)
+        public UserPasswordAuthenticationProvider(string appId, string appSecret, string userName, string password, IGraphLogger logger)
             : base(logger.NotNull(nameof(logger)).CreateShim(nameof(UserPasswordAuthenticationProvider)))
         {
-            _appName = appName.NotNullOrWhitespace(nameof(appName));
             _appId = appId.NotNullOrWhitespace(nameof(appId));
             _appSecret = appSecret.NotNullOrWhitespace(nameof(appSecret));
 
