@@ -3,7 +3,7 @@
 namespace RecordingBot.Services.ServiceSetup
 {
     [Serializable]
-    internal class CertNotFoundException : Exception
+    public class CertNotFoundException : Exception
     {
         public CertNotFoundException()
         {
