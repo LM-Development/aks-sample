@@ -2,6 +2,7 @@ using Microsoft.Skype.Bots.Media;
 
 namespace RecordingBot.Services.Media
 {
+    [System.Serializable]
     public class SerializableAudioQualityOfExperienceData
     {
         public string Id;
