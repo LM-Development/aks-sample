@@ -129,13 +129,6 @@ namespace RecordingBot.Services.Authentication
                 JwtSecurityTokenHandler handler = new();
                 claimsPrincipal = handler.ValidateToken(token, validationParameters, out _);
             }
-
-            // Token expired... should somehow return 401 (Unauthorized)
-            // catch (SecurityTokenExpiredException ex)
-            // Tampered token
-            // catch (SecurityTokenInvalidSignatureException ex)
-            // Some other validation error
-            // catch (SecurityTokenValidationException ex)
             catch (Exception ex)
             {
                 // Some other error

@@ -105,7 +105,7 @@ namespace RecordingBot.Services.Media
 
                     await writer.FlushAsync();
 
-                    writer.Dispose();
+                    await writer.DisposeAsync();
 
                     // Is Resampling and/or mono to stereo conversion required?
                     if (_settings.AudioSettings.WavSettings != null)
