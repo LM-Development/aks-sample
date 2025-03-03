@@ -2,8 +2,8 @@
 This project aims to provide automated end to end tests for a compliance recording bot between two or more users participating in a call.  
 It's purpose is to ensure that a compliance recording bot joins a call and the call participants receives a visual notification that a records has started.  
 
-## Driver
-As a driver playwright.net is used. (Read more [Playwright](https://playwright.dev/dotnet/))
+## End-To-End Framework
+As a end-to-end testing framework playwright.net is used. (Read more [Playwright](https://playwright.dev/dotnet/))
 
 ## Framework
 As a framework to write and execute tests, nUnit is used. (Read  more [NUnit](https://nunit.org/))
