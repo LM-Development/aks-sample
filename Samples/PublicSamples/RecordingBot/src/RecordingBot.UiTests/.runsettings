@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<RunSettings>
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <LaunchOptions>
+      <SlowMo>0</SlowMo>
+      <Headless>true</Headless>
+    </LaunchOptions>
+  </Playwright>
+  <RunConfiguration>
+    <EnvironmentVariables>
+      <UserA_Username></UserA_Username>
+      <UserA_UserPassword></UserA_UserPassword>
+      <UserA_UserSeed></UserA_UserSeed>
+      <UserB_Username></UserB_Username>
+      <UserB_UserPassword></UserB_UserPassword>
+      <UserB_UserSeed></UserB_UserSeed>
+      <UserC_Username></UserC_Username>
+      <UserC_UserPassword></UserC_UserPassword>
+      <UserC_UserSeed></UserC_UserSeed>
+    </EnvironmentVariables>
+  </RunConfiguration>
+</RunSettings>
