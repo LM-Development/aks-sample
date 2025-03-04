@@ -12,6 +12,6 @@
         public const string CallToastAcceptAudio = CallToastCallingActions + " button:nth-child(2)";
         public const string CallToastHangUp = CallToastCallingActions + "button:nth-child(3)";
 
-        public const string CallComplianceToast = "#missing-selector";
+        public const string CallComplianceToast = "[data-tid='ufd_ComplianceRecordingStartedByCurrentUser']";
     }
 }

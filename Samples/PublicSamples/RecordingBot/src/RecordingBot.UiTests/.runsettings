@@ -4,7 +4,7 @@
     <BrowserName>chromium</BrowserName>
     <LaunchOptions>
       <SlowMo>0</SlowMo>
-      <Headless>true</Headless>
+      <Headless>false</Headless>
     </LaunchOptions>
   </Playwright>
   <RunConfiguration>

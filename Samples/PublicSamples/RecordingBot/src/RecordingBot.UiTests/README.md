@@ -50,5 +50,4 @@ Locally its a good idea execute the tests not in headless mode to see the test r
 
 # Contribute
 TODO: 
-Currently there is a missing locator for the compliance recording bot toast (Locator: CallComplianceToast). This needs to be added to the project.
-Furthermore the login uses xPath to find the elements. This should be changed to use the id or data-tid once it is provided.
+Furthermore the login and some other locators uses xPath to find the elements. This should be changed to use the id or data-tid once it is provided.
