@@ -5,7 +5,7 @@ This repository follows the [Diataxis framework](https://diataxis.fr/).
 
 |           |  Acquisition                  | Application                    |
 |-----------|-------------------------------|--------------------------------|
-| Action    | [Tutorials](#tutorials)       | [How-To Guides](#howto-guides) |
+| Action    | [Tutorials](#tutorials)       | [How-To Guides](#how-to-guides) |
 | Cognition | [Explanations](#explanations) | [References](#references)      |
 
 ## Tutorials
