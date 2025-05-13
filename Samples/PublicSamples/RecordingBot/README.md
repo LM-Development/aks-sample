@@ -44,6 +44,8 @@ The easiest way to grasp the basics surrounding compliance bots is to read up on
 - [Bot Service - Entra Id and Microsoft Graph API Calling Permissions](./docs/explanations/recording-bot-permission.md)
 - [Compliance Recording Policies](./docs/explanations/recording-bot-policy.md)
 
+To explore even more documentation, we advise taking a look at our [documentation index page](./docs/index.md)
+
 ### Deploy
 
 [Deploy the recording bot sample to AKS with the tutorial](./docs/tutorials/deploy-tutorial.md), to get your own recording bot up and running.
