@@ -7,7 +7,7 @@ namespace RecordingBot.Services.Contract
 {
     public interface IMediaStream
     {
-        Task AppendAudioBuffer(AudioMediaBuffer buffer, List<IParticipant> participant);
+        Task AppendAudioBuffer(AudioMediaBuffer buffer, List<IParticipant> participants);
         Task End();
     }
 }

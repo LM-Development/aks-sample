@@ -3,7 +3,7 @@ using System;
 
 namespace RecordingBot.Model.Models
 {
-    public partial class JoinURLResponse
+    public partial class JoinUrlResponse
     {
         [JsonProperty("callId")]
         public object CallId { get; set; }

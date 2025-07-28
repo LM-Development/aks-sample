@@ -115,13 +115,10 @@ namespace RecordingBot.Services.Bot
             // Event - Recording update e.g established/updated/start/ended
             _eventPublisher.Publish($"Call{e.NewResource.State}", $"Call.ID {Call.Id} Sender.Id {sender.Id} status updated to {e.NewResource.State} - {e.NewResource.ResultInfo?.Message}");
 
-            if (e.OldResource.State != e.NewResource.State && e.NewResource.State == CallState.Established)
+            if (e.OldResource.State != e.NewResource.State && e.NewResource.State == CallState.Established && !_isDisposed)
             {
-                if (!_isDisposed)
-                {
-                    // Call is established. We should start receiving Audio, we can inform clients that we have started recording.
-                    OnRecordingStatusFlip(sender);
-                }
+                // Call is established. We should start receiving Audio, we can inform clients that we have started recording.
+                OnRecordingStatusFlip(sender);
             }
 
             if ((e.OldResource.State == CallState.Established) && (e.NewResource.State == CallState.Terminated))
@@ -184,12 +181,9 @@ namespace RecordingBot.Services.Bot
                 {
                     json = UpdateParticipant(BotMediaStream.participants, participant, added, participantDetails.DisplayName);
                 }
-                else if (participant.Resource.Info.Identity.AdditionalData?.Count > 0)
+                else if (participant.Resource.Info.Identity.AdditionalData?.Count > 0 && CheckParticipantIsUsable(participant))
                 {
-                    if (CheckParticipantIsUsable(participant))
-                    {
-                        json = UpdateParticipant(BotMediaStream.participants, participant, added);
-                    }
+                    json = UpdateParticipant(BotMediaStream.participants, participant, added);
                 }
 
                 if (json.Length > 0)

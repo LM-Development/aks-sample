@@ -1,11 +1,11 @@
 namespace RecordingBot.Services.ServiceSetup
 {
-    public class WAVSettings
+    public class WavSettings
     {
         public int? SampleRate { get; set; }
         public int? Quality { get; set; }
 
-        public WAVSettings(int sampleRate, int quality)
+        public WavSettings(int sampleRate, int quality)
         {
             SampleRate = sampleRate;
             Quality = quality;
