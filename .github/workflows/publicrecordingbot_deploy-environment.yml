@@ -197,7 +197,7 @@ jobs:
         kubectl get ingress -n ${{ env.NAMESPACE }}
         
         # Wait for StatefulSet to be ready
-        kubectl wait --for=condition=ready pod -l app=${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --timeout=600s
+        kubectl wait --for=condition=ready pod -l app=${{ env.RELEASE_NAME }} -n ${{ env.NAMESPACE }} --timeout=1200s
         echo "✅ All pods are ready"
 
     - name: Display deployment summary

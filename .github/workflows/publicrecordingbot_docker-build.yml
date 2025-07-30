@@ -11,7 +11,10 @@ on:
         description: 'Container registry namespace/repository'
         required: true
         type: string
-
+    outputs:
+      image-tag:
+        description: 'Tag of the built Docker image'
+        value: ${{ inputs.tag }}
 jobs:
   build-push-cr:
     runs-on: windows-2022

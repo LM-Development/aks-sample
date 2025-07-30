@@ -47,23 +47,6 @@ on:
         description: 'OTP seed for test user C'
         required: false
 
-  workflow_dispatch:
-    inputs:
-      headless-mode:
-        description: 'Run Playwright tests in headless mode'
-        required: false
-        type: boolean
-        default: true
-      test-environment:
-        description: 'Environment to run tests against'
-        required: false
-        type: string
-        default: 'dev'
-      github-issue-number:
-        description: 'GitHub issue/PR number to post test results as comment'
-        required: false
-        type: string
-
 jobs:
   dotnet-build-and-test:
     runs-on: windows-2022
@@ -128,7 +111,8 @@ jobs:
       - name: Install Playwright browsers
         run: |
           dotnet tool install --global Microsoft.Playwright.CLI
-          playwright install
+          dotnet build RecordingBot.UiTests
+          pwsh RecordingBot.UiTests/bin/Debug/net8.0/playwright.ps1 install
 
       - name: Create .runsettings file
         run: |
