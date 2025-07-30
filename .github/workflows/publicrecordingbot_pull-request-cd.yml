@@ -1,0 +1,80 @@
+name: Recording Bot Release Docker Image
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - Samples/PublicSamples/RecordingBot/**
+      - .github/workflows/publicrecordingbot_pull-request-cd.yml
+
+jobs:
+  extract-pr-number:
+    runs-on: ubuntu-latest
+    outputs:
+      pr-number: ${{ steps.get-pr.outputs.pr-number }}
+      has-pr: ${{ steps.get-pr.outputs.has-pr }}
+    
+    steps:
+      - name: Get PR number from merge commit
+        id: get-pr
+        run: |
+          commit_message="${{ github.event.head_commit.message }}"
+          echo "Commit message: $commit_message"
+          
+          # Extract PR number from merge commit message
+          if [[ "$commit_message" =~ Merge\ pull\ request\ \#([0-9]+) ]]; then
+            pr_number="${BASH_REMATCH[1]}"
+            echo "pr-number=$pr_number" >> $GITHUB_OUTPUT
+            echo "has-pr=true" >> $GITHUB_OUTPUT
+            echo "Found PR number: $pr_number"
+          else
+            echo "pr-number=" >> $GITHUB_OUTPUT
+            echo "has-pr=false" >> $GITHUB_OUTPUT
+            echo "No PR number found in commit message"
+          fi
+
+  retag-and-push:
+    runs-on: ubuntu-latest
+    needs: extract-pr-number
+    if: needs.extract-pr-number.outputs.has-pr == 'true'
+
+    permissions:
+      packages: write
+
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull PR image and retag as latest
+        run: |
+          PR_NUMBER="${{ needs.extract-pr-number.outputs.pr-number }}"
+          PR_TAG="pr-${PR_NUMBER}"
+          REGISTRY="${{ vars.CR_NAMESPACE_REPOSITORY }}"
+          
+          echo "🔍 Pulling image with tag: $PR_TAG"
+          docker pull ${REGISTRY}:${PR_TAG}
+          
+          echo "🏷️ Retagging image as latest"
+          docker tag ${REGISTRY}:${PR_TAG} ${REGISTRY}:latest
+          
+          echo "🚀 Pushing latest image"
+          docker push ${REGISTRY}:latest
+          
+          echo "✅ Successfully promoted ${REGISTRY}:${PR_TAG} to ${REGISTRY}:latest"
+
+  build-fallback:
+    needs: extract-pr-number
+    if: needs.extract-pr-number.outputs.has-pr == 'false'
+    uses: ./.github/workflows/docker-build.yml
+    permissions:
+      packages: write
+    with:
+      tag: pr-${{ github.event.number }}
+      cr-namespace-repository: ${{ vars.CR_NAMESPACE_REPOSITORY }}
+    secrets: inherit

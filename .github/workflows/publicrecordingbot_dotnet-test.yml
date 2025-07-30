@@ -1,0 +1,294 @@
+name: Recording Bot Test
+
+on: 
+  workflow_call:
+    inputs:
+      headless-mode:
+        description: 'Run Playwright tests in headless mode'
+        required: false
+        type: boolean
+        default: true
+      test-environment:
+        description: 'Environment to run tests against'
+        required: false
+        type: string
+        default: 'dev'
+      github-issue-number:
+        description: 'GitHub issue/PR number to post test results as comment'
+        required: false
+        type: string
+
+    secrets:
+      USER_A_USERNAME:
+        description: 'Username for test user A'
+        required: false
+      USER_A_PASSWORD:
+        description: 'Password for test user A'
+        required: false
+      USER_A_SEED:
+        description: 'OTP seed for test user A'
+        required: false
+      USER_B_USERNAME:
+        description: 'Username for test user B'
+        required: false
+      USER_B_PASSWORD:
+        description: 'Password for test user B'
+        required: false
+      USER_B_SEED:
+        description: 'OTP seed for test user B'
+        required: false
+      USER_C_USERNAME:
+        description: 'Username for test user C'
+        required: false
+      USER_C_PASSWORD:
+        description: 'Password for test user C'
+        required: false
+      USER_C_SEED:
+        description: 'OTP seed for test user C'
+        required: false
+
+  workflow_dispatch:
+    inputs:
+      headless-mode:
+        description: 'Run Playwright tests in headless mode'
+        required: false
+        type: boolean
+        default: true
+      test-environment:
+        description: 'Environment to run tests against'
+        required: false
+        type: string
+        default: 'dev'
+      github-issue-number:
+        description: 'GitHub issue/PR number to post test results as comment'
+        required: false
+        type: string
+
+jobs:
+  dotnet-build-and-test:
+    runs-on: windows-2022
+    outputs:
+      unit-test-result: ${{ steps.unit-tests.outcome }}
+      ui-test-result: ${{ steps.ui-tests.outcome }}
+      unit-test-summary: ${{ steps.parse-unit-results.outputs.summary }}
+      ui-test-summary: ${{ steps.parse-ui-results.outputs.summary }}
+
+    defaults:
+      run:
+        working-directory: Samples/PublicSamples/RecordingBot/src
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.x"
+      
+      - name: Rename .env-template files
+        run: |
+          if (Test-Path "RecordingBot.Tests\.env-template") {
+            Rename-Item "RecordingBot.Tests\.env-template" -NewName ".env"
+          }
+          if (Test-Path "RecordingBot.Console\.env-template") {
+            Rename-Item "RecordingBot.Console\.env-template" -NewName ".env"
+          }
+      
+      - name: Build project
+        run: dotnet build
+
+      - name: Test project (Unit Tests)
+        id: unit-tests
+        run: dotnet test --filter "Category!=UITest" --logger "trx;LogFileName=unit-test-results.trx"
+
+      - name: Parse Unit Test Results
+        id: parse-unit-results
+        if: always()
+        run: |
+          $testResultFile = Get-ChildItem -Path . -Recurse -Name "unit-test-results.trx" | Select-Object -First 1
+          if ($testResultFile) {
+            $fullPath = Get-ChildItem -Path . -Recurse -Filter "unit-test-results.trx" | Select-Object -First 1 -ExpandProperty FullName
+            Write-Host "Found test results: $fullPath"
+            
+            [xml]$testResults = Get-Content $fullPath
+            $testRun = $testResults.TestRun
+            
+            $total = $testRun.ResultSummary.Counters.total
+            $passed = $testRun.ResultSummary.Counters.passed
+            $failed = $testRun.ResultSummary.Counters.failed
+            $skipped = $testRun.ResultSummary.Counters.inconclusive
+            
+            $summary = "**Unit Tests**: $passed passed, $failed failed, $skipped skipped (Total: $total)"
+            echo "summary=$summary" >> $env:GITHUB_OUTPUT
+            Write-Host "Unit test summary: $summary"
+          } else {
+            echo "summary=**Unit Tests**: No results file found" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Install Playwright browsers
+        run: |
+          dotnet tool install --global Microsoft.Playwright.CLI
+          playwright install
+
+      - name: Create .runsettings file
+        run: |
+          $headlessMode = if ('${{ inputs.headless-mode }}' -eq 'true') { 'true' } else { 'false' }
+          $slowMo = if ('${{ inputs.headless-mode }}' -eq 'true') { '0' } else { '500' }
+          
+          $runsettingsContent = @"
+          <?xml version="1.0" encoding="utf-8"?>
+          <RunSettings>
+            <RunConfiguration>
+              <EnvironmentVariables>
+                <UserA_Username>${{ secrets.USER_A_USERNAME }}</UserA_Username>
+                <UserA_UserPassword>${{ secrets.USER_A_PASSWORD }}</UserA_UserPassword>
+                <UserA_UserSeed>${{ secrets.USER_A_SEED }}</UserA_UserSeed>
+                <UserB_Username>${{ secrets.USER_B_USERNAME }}</UserB_Username>
+                <UserB_UserPassword>${{ secrets.USER_B_PASSWORD }}</UserB_UserPassword>
+                <UserB_UserSeed>${{ secrets.USER_B_SEED }}</UserB_UserSeed>
+                <UserC_Username>${{ secrets.USER_C_USERNAME }}</UserC_Username>
+                <UserC_UserPassword>${{ secrets.USER_C_PASSWORD }}</UserC_UserPassword>
+                <UserC_UserSeed>${{ secrets.USER_C_SEED }}</UserC_UserSeed>
+              </EnvironmentVariables>
+              <TestRunParameters>
+                <Parameter name="LaunchOptions_Headless" value="$headlessMode" />
+                <Parameter name="LaunchOptions_SlowMo" value="$slowMo" />
+              </TestRunParameters>
+            </RunConfiguration>
+            <TestRunParameters>
+              <Parameter name="LaunchOptions_Headless" value="$headlessMode" />
+              <Parameter name="LaunchOptions_SlowMo" value="$slowMo" />
+            </TestRunParameters>
+          </RunSettings>
+          "@
+          
+          $runsettingsContent | Out-File -FilePath "test.runsettings" -Encoding UTF8
+          Write-Host "Created .runsettings file:"
+          Get-Content "test.runsettings"
+
+      - name: Build UI Test Project
+        run: dotnet build RecordingBot.UiTests
+
+      - name: Run Playwright UI Tests
+        run: |
+          dotnet test RecordingBot.UiTests --settings test.runsettings --filter "Category=UITest" --logger "trx;LogFileName=ui-test-results.trx"
+        env:
+          # Additional environment variables for Playwright
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}\playwright-browsers
+
+      - name: Parse UI Test Results
+        id: parse-ui-results
+        if: always()
+        run: |
+          $testResultFile = Get-ChildItem -Path . -Recurse -Name "ui-test-results.trx" | Select-Object -First 1
+          if ($testResultFile) {
+            $fullPath = Get-ChildItem -Path . -Recurse -Filter "ui-test-results.trx" | Select-Object -First 1 -ExpandProperty FullName
+            Write-Host "Found UI test results: $fullPath"
+            
+            [xml]$testResults = Get-Content $fullPath
+            $testRun = $testResults.TestRun
+            
+            $total = $testRun.ResultSummary.Counters.total
+            $passed = $testRun.ResultSummary.Counters.passed
+            $failed = $testRun.ResultSummary.Counters.failed
+            $skipped = $testRun.ResultSummary.Counters.inconclusive
+            
+            $summary = "**UI Tests (Playwright)**: $passed passed, $failed failed, $skipped skipped (Total: $total)"
+            echo "summary=$summary" >> $env:GITHUB_OUTPUT
+            Write-Host "UI test summary: $summary"
+          } else {
+            if ('${{ inputs.run-ui-tests }}' -eq 'true') {
+              echo "summary=**UI Tests (Playwright)**: No results file found" >> $env:GITHUB_OUTPUT
+            } else {
+              echo "summary=**UI Tests (Playwright)**: Skipped" >> $env:GITHUB_OUTPUT
+            }
+          }
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ inputs.test-environment }}
+          path: |
+            Samples/PublicSamples/RecordingBot/src/RecordingBot.UiTests/bin/Debug/net8.0/playwright-report/
+          retention-days: 30
+
+  post-test-results:
+    runs-on: ubuntu-latest
+    needs: [dotnet-build-and-test]
+    if: always() && inputs.github-issue-number != ''
+    
+    steps:
+      - name: Create Test Results Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = parseInt('${{ inputs.github-issue-number }}');
+            const testEnvironment = '${{ inputs.test-environment }}';
+            const runId = '${{ github.run_id }}';
+            const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${runId}`;
+            
+            // Get test results
+            const unitTestResult = '${{ needs.dotnet-build-and-test.outputs.unit-test-result }}';
+            const uiTestResult = '${{ needs.dotnet-build-and-test.outputs.ui-test-result }}';
+            const unitTestSummary = '${{ needs.dotnet-build-and-test.outputs.unit-test-summary }}';
+            const uiTestSummary = '${{ needs.dotnet-build-and-test.outputs.ui-test-summary }}';
+            
+            // Determine overall status
+            let overallStatus = '✅ Success';
+            if (unitTestResult === 'failure' || uiTestResult === 'failure') {
+              overallStatus = '❌ Failed';
+            } else if (unitTestResult === 'cancelled' || uiTestResult === 'cancelled') {
+              overallStatus = '⏸️ Cancelled';
+            }
+            
+            // Format timestamp
+            const timestamp = new Date().toLocaleString('de-DE', {
+              timeZone: 'Europe/Berlin',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            });
+            
+            // Create comment body
+            const commentBody = `## 🤖 Teams Recording Bot Test Results
+            
+            **Environment:** \`${testEnvironment}\`  
+            **Status:** ${overallStatus}  
+            **Executed:** ${timestamp}  
+            **Workflow Run:** [View Details](${runUrl})
+            
+            ### Test Results Summary
+            
+            ${unitTestSummary || '**Unit Tests**: Not executed'}
+            
+            ${uiTestSummary || '**UI Tests (Playwright)**: Not executed'}
+            
+            ### Test Configuration
+            - **UI Tests Enabled:** ${{ inputs.run-ui-tests }}
+            - **Headless Mode:** ${{ inputs.headless-mode }}
+            - **Test Environment:** ${testEnvironment}
+            
+            ### Artifacts
+            ${uiTestResult === 'success' || uiTestResult === 'failure' ? '- 📊 UI Test Results and Playwright Reports available in workflow artifacts' : '- No UI test artifacts generated'}
+            
+            ---
+            *This comment was automatically generated by the Teams Recording Bot test workflow.*`;
+            
+            // Post comment
+            try {
+              const result = await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: commentBody
+              });
+              
+              console.log(`Comment posted successfully: ${result.data.html_url}`);
+            } catch (error) {
+              console.error('Failed to post comment:', error);
+              core.setFailed(`Failed to post comment: ${error.message}`);
+            }
