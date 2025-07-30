@@ -6,6 +6,7 @@
         <Platforms>x64</Platforms>
         <LangVersion>latest</LangVersion>
         <Nullable>disable</Nullable>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
     </PropertyGroup>
 
     <PropertyGroup>
