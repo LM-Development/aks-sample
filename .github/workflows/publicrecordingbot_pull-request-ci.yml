@@ -180,7 +180,7 @@ jobs:
       cluster-name: ${{ vars.AKS_CLUSTER_NAME }}
       resource-group: ${{ vars.AKS_RESOURCE_GROUP }}
       subscription: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-      namespace: aks-sample
+      namespace: teams-recording-bot
       host: ${{ needs.start-cluster.outputs.cluster-fqdn }}
       image-registry: ${{ vars.CR_REGISTRY }}
       image-name: ${{ vars.CR_IMAGE_NAME }}
