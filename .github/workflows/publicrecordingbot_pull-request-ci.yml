@@ -81,7 +81,7 @@ jobs:
           version: 'latest'
 
       - name: Lint Helm Chart
-        working-directory: teams-recording-bot
+        working-directory: Samples/PublicSamples/RecordingBot/deploy/teams-recording-bot
         if: needs.check-recording-bot-changes.outputs.deploy == 'True'
         run: |
           echo "🔍 Linting Helm chart..."
