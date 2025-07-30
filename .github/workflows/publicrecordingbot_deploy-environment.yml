@@ -83,11 +83,11 @@ on:
 env:
   ENVIRONMENT_NAME: ${{ inputs.environment-name }}
   PORT: ${{ inputs.port }}
-  CLUSTER_NAME: ${{ inputs.cluster-name || 'aks-sample-cluster' }}
-  RESOURCE_GROUP: ${{ inputs.resource-group || 'aks-sample-rg' }}
-  NAMESPACE: ${{ inputs.namespace || 'teams-recording-bot' }}
+  CLUSTER_NAME: ${{ inputs.cluster-name }}
+  RESOURCE_GROUP: ${{ inputs.resource-group }}
+  NAMESPACE: ${{ inputs.namespace}}
   RELEASE_NAME: ${{ inputs.environment-name }}
-  AZURE_SUBSCRIPTION_ID: ${{ inputs.subscription || '' }}
+  AZURE_SUBSCRIPTION_ID: ${{ inputs.subscription }}
 
 jobs:
   deploy:
