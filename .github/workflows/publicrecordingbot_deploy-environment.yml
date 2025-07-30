@@ -86,7 +86,6 @@ env:
   CLUSTER_NAME: ${{ inputs.cluster-name || 'aks-sample-cluster' }}
   RESOURCE_GROUP: ${{ inputs.resource-group || 'aks-sample-rg' }}
   NAMESPACE: ${{ inputs.namespace || 'teams-recording-bot' }}
-  HELM_CHART_PATH: './Samples/PublicSamples/RecordingBot/deploy/teams-recording-bot'
   RELEASE_NAME: ${{ inputs.environment-name }}
   AZURE_SUBSCRIPTION_ID: ${{ inputs.subscription || '' }}
 
@@ -125,7 +124,6 @@ jobs:
     - name: Update Helm dependencies
       run: |
         echo "📦 Updating Helm dependencies"
-        cd ${{ env.HELM_CHART_PATH }}
         helm dependency update
 
     - name: Create namespace if not exists
@@ -175,7 +173,7 @@ jobs:
     - name: Validate Helm chart
       run: |
         echo "✅ Validating Helm chart"
-        helm template ${{ env.RELEASE_NAME }} ${{ env.HELM_CHART_PATH }} \
+        helm template ${{ env.RELEASE_NAME }} ./ \
           --namespace ${{ env.NAMESPACE }} \
           --values ${{ steps.helm-values.outputs.values-file-path }} \
           --dry-run > /dev/null
@@ -184,7 +182,7 @@ jobs:
     - name: Deploy with Helm
       run: |
         echo "🚀 Deploying ${{ env.ENVIRONMENT_NAME }} Teams Recording Bot to Kubernetes"
-        helm upgrade --install ${{ env.RELEASE_NAME }} ${{ env.HELM_CHART_PATH }} \
+        helm upgrade --install ${{ env.RELEASE_NAME }} ./ \
           --namespace ${{ env.NAMESPACE }} \
           --values ${{ steps.helm-values.outputs.values-file-path }} \
           --wait \
