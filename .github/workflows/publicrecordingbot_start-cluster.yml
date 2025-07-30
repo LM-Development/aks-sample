@@ -170,7 +170,8 @@ jobs:
       id: cluster-info
       run: |
         FQDN=$(az aks show --name ${{ env.CLUSTER_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --query "fqdn" -o tsv --subscription ${{ env.AZURE_SUBSCRIPTION_ID }})
-        IP=$(az network.public-ip list --resource-group ${{ env.RESOURCE_GROUP }} --query "[?contains(name, '${{ env.CLUSTER_NAME }}')].ipAddress" -o tsv --subscription ${{ env.AZURE_SUBSCRIPTION_ID }})
+        IP_ID=$(az aks show --name ${{ env.CLUSTER_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --query "networkProfile.loadBalancerProfile.effectiveOutboundIPs[0].id" -o tsv --subscription ${{ env.AZURE_SUBSCRIPTION_ID }})
+        IP=$(az network public-ip show --ids "$IP_ID" --query "ipAddress" -o tsv --subscription ${{ env.AZURE_SUBSCRIPTION_ID }})
         echo "ip=$IP" >> $GITHUB_OUTPUT
         echo "fqdn=$FQDN" >> $GITHUB_OUTPUT
         echo "🌐 Cluster FQDN: $FQDN"
