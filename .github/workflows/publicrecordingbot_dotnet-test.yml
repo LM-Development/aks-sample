@@ -122,6 +122,13 @@ jobs:
           $runsettingsContent = @"
           <?xml version="1.0" encoding="utf-8"?>
           <RunSettings>
+            <Playwright>
+              <BrowserName>chromium</BrowserName>
+                <LaunchOptions>
+                  <SlowMo>$slowMo</SlowMo>
+                  <Headless>$headlessMode</Headless>
+                </LaunchOptions>
+            </Playwright>
             <RunConfiguration>
               <EnvironmentVariables>
                 <UserA_Username>${{ secrets.USER_A_USERNAME }}</UserA_Username>
@@ -134,15 +141,7 @@ jobs:
                 <UserC_UserPassword>${{ secrets.USER_C_PASSWORD }}</UserC_UserPassword>
                 <UserC_UserSeed>${{ secrets.USER_C_SEED }}</UserC_UserSeed>
               </EnvironmentVariables>
-              <TestRunParameters>
-                <Parameter name="LaunchOptions_Headless" value="$headlessMode" />
-                <Parameter name="LaunchOptions_SlowMo" value="$slowMo" />
-              </TestRunParameters>
             </RunConfiguration>
-            <TestRunParameters>
-              <Parameter name="LaunchOptions_Headless" value="$headlessMode" />
-              <Parameter name="LaunchOptions_SlowMo" value="$slowMo" />
-            </TestRunParameters>
           </RunSettings>
           "@
           

@@ -5,7 +5,8 @@ on:
     inputs:
       tag:
         description: 'Tag for the Docker image'
-        required: true
+        required: false
+        default: ''
         type: string
       cr-namespace-repository:
         description: 'Container registry namespace/repository'
@@ -14,7 +15,7 @@ on:
     outputs:
       image-tag:
         description: 'Tag of the built Docker image'
-        value: ${{ inputs.tag }}
+        value: ${{ steps.generate-tag.outputs.tag }}
 jobs:
   build-push-cr:
     runs-on: windows-2022
@@ -36,13 +37,37 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Generate Docker image tag
+        id: generate-tag
+        run: |
+          if [ -z "${{ inputs.tag }}" ]; then
+            echo "No tag provided, generating a hash based tag."
+            hash=$(find ./src ./build ./scripts -type f -exec sha256sum {} \; | sort | sha256sum | awk '{print $1}')
+            echo "tag=$hash" >> $GITHUB_OUTPUT
+          else
+            echo "Using provided tag: ${{ inputs.tag }}"
+            echo "tag=${{ inputs.tag }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if Docker image exists
+        id: check-image
+        run: |
+          if docker manifest inspect ${{ inputs.cr-namespace-repository }}:${{ steps.generate-tag.outputs.tag }} > /dev/null 2>&1; then
+            echo "Image already exists, skipping build."
+            echo "image-exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "image-exists=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Build and Tag docker image
+        if: steps.check-image.outputs.image-exists != 'true'
         shell: bash
         run: |
-          docker build -f ./build/Dockerfile . -t ${{ inputs.cr-namespace-repository }}:${{ inputs.tag }}
+          docker build -f ./build/Dockerfile . -t ${{ inputs.cr-namespace-repository }}:${{ steps.generate-tag.outputs.tag }}
 
       - name: Push docker image to CR
+        if: steps.check-image.outputs.image-exists != 'true'
         shell: bash
         run: |
-          docker push ${{ inputs.cr-namespace-repository }}:${{ inputs.tag }}
+          docker push ${{ inputs.cr-namespace-repository }}:${{ steps.generate-tag.outputs.tag }}

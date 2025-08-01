@@ -19,29 +19,6 @@ set /p AzureSettings__CertificateThumbprint= < thumbprint
 del thumbprint
 del certificate.pfx
 
-set /A CallSignalingPort2 = %AzureSettings__CallSignalingPort% + 1
-
-:: --- Delete existing certificate bindings and URL ACL registrations ---
-echo Setup: Deleting bindings
-netsh http delete sslcert ipport=0.0.0.0:%AzureSettings__CallSignalingPort% > nul
-netsh http delete sslcert ipport=0.0.0.0:%AzureSettings__InstanceInternalPort% > nul
-netsh http delete urlacl url=https://+:%AzureSettings__CallSignalingPort%/ > nul
-netsh http delete urlacl url=https://+:%AzureSettings__InstanceInternalPort%/ > nul
-netsh http delete urlacl url=http://+:%CallSignalingPort2%/ > nul
-
-:: --- Add new URL ACLs and certificate bindings ---
-echo Setup: Adding bindings
-netsh http add urlacl url=https://+:%AzureSettings__CallSignalingPort%/ sddl=D:(A;;GX;;;S-1-1-0) > nul && ^
-netsh http add urlacl url=https://+:%AzureSettings__InstanceInternalPort%/ sddl=D:(A;;GX;;;S-1-1-0) > nul && ^
-netsh http add urlacl url=http://+:%CallSignalingPort2%/ sddl=D:(A;;GX;;;S-1-1-0) > nul && ^
-netsh http add sslcert ipport=0.0.0.0:%AzureSettings__CallSignalingPort% certhash=%AzureSettings__CertificateThumbprint% appid={aeeb866d-e17b-406f-9385-32273d2f8691} > nul && ^
-netsh http add sslcert ipport=0.0.0.0:%AzureSettings__InstanceInternalPort% certhash=%AzureSettings__CertificateThumbprint% appid={aeeb866d-e17b-406f-9385-32273d2f8691} > nul
-
-if errorlevel 1 (
-   echo Setup: Failed to add URL ACLs and certificate bings.
-   exit /b %errorlevel%
-)
-
 echo Setup: Done
 echo ---------------------
 
