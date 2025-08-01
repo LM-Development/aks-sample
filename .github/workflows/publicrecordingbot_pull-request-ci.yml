@@ -161,7 +161,6 @@ jobs:
     permissions:
       packages: write
     with:
-      tag: pr-${{ github.event.number }}
       cr-namespace-repository: ${{ vars.CR_NAMESPACE_REPOSITORY }}
     secrets: inherit
 

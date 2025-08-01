@@ -44,7 +44,7 @@ jobs:
       - name: Generate Docker image tag
         id: generate-tag
         run: |
-          if [ -z "${{ inputs.tag }}" ]; then
+          if [[ -z "${{ inputs.tag }}" ]]; then
             echo "No tag provided, generating a hash based tag."
             hash=$(find ./src ./build ./scripts -type f -exec sha256sum {} \; | sort | sha256sum | awk '{print $1}')
             echo "tag=$hash" >> $GITHUB_OUTPUT
