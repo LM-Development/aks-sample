@@ -120,34 +120,33 @@ jobs:
           $slowMo = if ('${{ inputs.headless-mode }}' -eq 'true') { '0' } else { '500' }
           
           $runsettingsContent = @"
-          <?xml version="1.0" encoding="utf-8"?>
+          <?xml version=""1.0"" encoding=""utf-8""?>
           <RunSettings>
             <Playwright>
               <BrowserName>chromium</BrowserName>
-                <LaunchOptions>
-                  <SlowMo>$slowMo</SlowMo>
-                  <Headless>$headlessMode</Headless>
-                </LaunchOptions>
+              <LaunchOptions>
+                <SlowMo>$slowMo</SlowMo>
+                <Headless>$headlessMode</Headless>
+              </LaunchOptions>
             </Playwright>
             <RunConfiguration>
               <EnvironmentVariables>
-                <UserA_Username>${{ secrets.USER_A_USERNAME }}</UserA_Username>
-                <UserA_UserPassword>${{ secrets.USER_A_PASSWORD }}</UserA_UserPassword>
-                <UserA_UserSeed>${{ secrets.USER_A_SEED }}</UserA_UserSeed>
-                <UserB_Username>${{ secrets.USER_B_USERNAME }}</UserB_Username>
-                <UserB_UserPassword>${{ secrets.USER_B_PASSWORD }}</UserB_UserPassword>
-                <UserB_UserSeed>${{ secrets.USER_B_SEED }}</UserB_UserSeed>
-                <UserC_Username>${{ secrets.USER_C_USERNAME }}</UserC_Username>
-                <UserC_UserPassword>${{ secrets.USER_C_PASSWORD }}</UserC_UserPassword>
-                <UserC_UserSeed>${{ secrets.USER_C_SEED }}</UserC_UserSeed>
+                <UserA_Username>$([System.Security.SecurityElement]::Escape("${{ secrets.USER_A_USERNAME }}"))</UserA_Username>
+                <UserA_UserPassword>$([System.Security.SecurityElement]::Escape("${{ secrets.USER_A_PASSWORD }}"))</UserA_UserPassword>
+                <UserA_UserSeed>$([System.Security.SecurityElement]::Escape("${{ secrets.USER_A_SEED }}"))</UserA_UserSeed>
+                <UserB_Username>$([System.Security.SecurityElement]::Escape("${{ secrets.USER_B_USERNAME }}"))</UserB_Username>
+                <UserB_UserPassword>$([System.Security.SecurityElement]::Escape("${{ secrets.USER_B_PASSWORD }}"))</UserB_UserPassword>
+                <UserB_UserSeed>$([System.Security.SecurityElement]::Escape("${{ secrets.USER_B_SEED }}"))</UserB_UserSeed>
+                <UserC_Username>$([System.Security.SecurityElement]::Escape("${{ secrets.USER_C_USERNAME }}"))</UserC_Username>
+                <UserC_UserPassword>$([System.Security.SecurityElement]::Escape("$($env:USER_C_PASSWORD)"))</UserC_UserPassword>
+                <UserC_UserSeed>$([System.Security.SecurityElement]::Escape("$($env:USER_C_SEED)"))</UserC_UserSeed>
               </EnvironmentVariables>
             </RunConfiguration>
           </RunSettings>
           "@
           
           $runsettingsContent | Out-File -FilePath "test.runsettings" -Encoding UTF8
-          Write-Host "Created .runsettings file:"
-          Get-Content "test.runsettings"
+          Write-Host "Created .runsettings file"
 
       - name: Build UI Test Project
         run: dotnet build RecordingBot.UiTests

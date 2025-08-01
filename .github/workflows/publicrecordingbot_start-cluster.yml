@@ -169,13 +169,13 @@ jobs:
     - name: Get cluster information
       id: cluster-info
       run: |
-        FQDN=$(az aks show --name ${{ env.CLUSTER_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --query "fqdn" -o tsv --subscription ${{ env.AZURE_SUBSCRIPTION_ID }})
         IP_ID=$(az aks show --name ${{ env.CLUSTER_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --query "networkProfile.loadBalancerProfile.effectiveOutboundIPs[0].id" -o tsv --subscription ${{ env.AZURE_SUBSCRIPTION_ID }})
         IP=$(az network public-ip show --ids "$IP_ID" --query "ipAddress" -o tsv --subscription ${{ env.AZURE_SUBSCRIPTION_ID }})
         echo "ip=$IP" >> $GITHUB_OUTPUT
-        echo "fqdn=$FQDN" >> $GITHUB_OUTPUT
+        DNS_NAME=$(az network public-ip show --ids "$IP_ID" --query "dnsSettings.fqdn" -o tsv --subscription ${{ env.AZURE_SUBSCRIPTION_ID }})
+        echo "fqdn=$DNS_NAME" >> $GITHUB_OUTPUT
         echo "🌐 Cluster FQDN: $FQDN"
-
+  
     - name: Set cluster status output
       id: cluster-status
       run: |
