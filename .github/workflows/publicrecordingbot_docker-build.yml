@@ -43,6 +43,7 @@ jobs:
       
       - name: Generate Docker image tag
         id: generate-tag
+        shell: bash
         run: |
           if [[ -z "${{ inputs.tag }}" ]]; then
             echo "No tag provided, generating a hash based tag."
