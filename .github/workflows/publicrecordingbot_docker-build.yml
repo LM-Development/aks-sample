@@ -15,7 +15,7 @@ on:
     outputs:
       image-tag:
         description: 'Tag of the built Docker image'
-        value: ${{ steps.generate-tag.outputs.tag }}
+        value: ${{ jobs.build-push-cr.outputs.image-tag }}
 jobs:
   build-push-cr:
     runs-on: windows-2022
@@ -26,6 +26,9 @@ jobs:
     defaults:
       run:
         working-directory: Samples/PublicSamples/RecordingBot
+
+    outputs:
+      image-tag: ${{ steps.generate-tag.outputs.tag }}
 
     steps:
       - name: Checkout
