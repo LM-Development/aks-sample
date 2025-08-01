@@ -82,7 +82,7 @@ jobs:
 
       - name: Test project (Unit Tests)
         id: unit-tests
-        run: dotnet test --filter "Category!=UITest" --logger "trx;LogFileName=unit-test-results.trx"
+        run: dotnet test RecordingBot.Tests --logger "trx;LogFileName=unit-test-results.trx"
 
       - name: Parse Unit Test Results
         id: parse-unit-results
