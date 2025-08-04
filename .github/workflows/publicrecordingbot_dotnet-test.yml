@@ -109,6 +109,8 @@ jobs:
           }
 
       - name: Install Playwright browsers
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}\playwright-browsers
         run: |
           dotnet tool install --global Microsoft.Playwright.CLI
           dotnet build RecordingBot.UiTests
@@ -147,9 +149,6 @@ jobs:
           
           $runsettingsContent | Out-File -FilePath "test.runsettings" -Encoding UTF8
           Write-Host "Created .runsettings file"
-
-      - name: Build UI Test Project
-        run: dotnet build RecordingBot.UiTests
 
       - name: Run Playwright UI Tests
         run: |
