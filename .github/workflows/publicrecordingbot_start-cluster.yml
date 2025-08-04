@@ -174,8 +174,7 @@ jobs:
         echo "ip=$IP" >> $GITHUB_OUTPUT
         DNS_NAME=$(az network public-ip show --ids "$IP_ID" --query "dnsSettings.fqdn" -o tsv --subscription ${{ env.AZURE_SUBSCRIPTION_ID }})
         echo "fqdn=$DNS_NAME" >> $GITHUB_OUTPUT
-        echo "🌐 Cluster FQDN: $FQDN"
-  
+
     - name: Set cluster status output
       id: cluster-status
       run: |
