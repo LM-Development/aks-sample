@@ -30,8 +30,21 @@ namespace RecordingBot.UiTests.PageObjects.Login.Steps
             if (!string.IsNullOrWhiteSpace(person.Seed))
             {
                 var tokenInput = page.Locator(LoginPage.TokenInput);
+                try
+                {
+                    await tokenInput.WaitForAsync(new LocatorWaitForOptions
+                    {
+                        State = WaitForSelectorState.Visible,
+                        Timeout = 10000,
+                    });
+                }
+                catch (TimeoutException)
+                {
+                    // Token input not visible, skip 2FA
+                    return;
+                }
 
-                var totp = new Totp(Base32Encoding.ToBytes(person.Seed), totpSize: 6 );
+                var totp = new Totp(Base32Encoding.ToBytes(person.Seed), totpSize: 6);
                 string otpCode = totp.ComputeTotp();
 
                 if (!string.IsNullOrWhiteSpace(otpCode))

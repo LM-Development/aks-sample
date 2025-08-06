@@ -7,9 +7,11 @@ namespace RecordingBot.UiTests.PageObjects.Teams.Steps
     {
         public static async Task CreateAudioCall(IPage page)
         {
+
             await page.Locator(TeamsPage.Calendar).ClickAsync();
-            await page.Locator(CalendarPage.StartMeetingBtn).ClickAsync();
-            await page.Locator(CalendarPage.MeetNowFlyoutBtn).ClickAsync();
+            var calendarIframe = page.FrameLocator(CalendarPage.CalendarIFrame).First;
+            await calendarIframe.Locator(CalendarPage.StartMeetingBtn).First.ClickAsync();
+            await calendarIframe.Locator(CalendarPage.MeetNowFlyoutBtn).ClickAsync();
             await page.Locator(CalendarPage.JoinBtn).ClickAsync();
             await page.Locator(CalendarPage.InviteDismissBtn).ClickAsync();
         }
