@@ -8,6 +8,7 @@
         <LangVersion>latest</LangVersion>
         <IsTestProject>true</IsTestProject>
         <Nullable>disable</Nullable>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
     </PropertyGroup>
 
     <ItemGroup>

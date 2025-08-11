@@ -1,0 +1,69 @@
+name: Recording Bot Release Docker Image
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - Samples/PublicSamples/RecordingBot/**
+      - .github/workflows/publicrecordingbot_pull-request-cd.yml
+
+jobs:
+  retag-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      packages: write
+
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Docker image tag
+        id: generate-tag
+        run: |
+            hash=$(find ../../src ../../build ../../scripts -type f -exec sha256sum {} \; | sort | sha256sum | awk '{print $1}')
+            echo "tag=$hash" >> $GITHUB_OUTPUT
+      
+      - name: Check if image exists
+        id: check-image
+        run: |
+          if docker manifest inspect ${{ vars.CR_NAMESPACE_REPOSITORY }}:${{ steps.generate-tag.outputs.tag }} > /dev/null 2>&1; then
+            echo "Image already exists"
+            echo "image-exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "image-exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Pull PR image and retag as latest
+        if: steps.check-image.outputs.image-exists == 'true'
+        run: |
+          TAG="${{ steps.generate-tag.outputs.tag }}"
+          REGISTRY="${{ vars.CR_NAMESPACE_REPOSITORY }}"
+
+          echo "🔍 Pulling image with tag: $TAG"
+          docker pull ${REGISTRY}:${TAG}
+
+          echo "🏷️ Retagging image as latest"
+          docker tag ${REGISTRY}:${TAG} ${REGISTRY}:latest
+
+          echo "🚀 Pushing latest image"
+          docker push ${REGISTRY}:latest
+
+          echo "✅ Successfully promoted ${REGISTRY}:${TAG} to ${REGISTRY}:latest"
+
+  build-fallback:
+    needs: retag-and-push
+    if: needs.retag-and-push.outputs.image-exists == 'false'
+    uses: ./.github/workflows/publicrecordingbot_docker-build.yml
+    permissions:
+      packages: write
+    with:
+      tag: latest
+      cr-namespace-repository: ${{ vars.CR_NAMESPACE_REPOSITORY }}
+    secrets: inherit
