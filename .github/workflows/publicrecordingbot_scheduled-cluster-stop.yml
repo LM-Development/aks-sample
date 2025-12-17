@@ -29,8 +29,8 @@ env:
   SUBSCRIPTION_ID: ${{ inputs.subscription || vars.AZURE_SUBSCRIPTION_ID }}
 
 jobs:
-  stop-cluster:
-    name: Stop AKS Cluster
+  print-info:
+    name: Print Scheduled Stop Information
     runs-on: ubuntu-latest
     
     steps:
@@ -42,14 +42,22 @@ jobs:
         echo "📍 Resource group: ${{ env.RESOURCE_GROUP }}"
         echo "💰 Purpose: Cost optimization by stopping cluster overnight"
 
-    - name: Stop AKS Cluster
-      uses: ./.github/workflows/publicrecordingbot_manage-cluster.yml
-      with:
-        action: 'stop'
-        cluster-name: ${{ env.CLUSTER_NAME }}
-        resource-group: ${{ env.RESOURCE_GROUP }}
-        subscription: ${{ env.SUBSCRIPTION_ID }}
+  stop-cluster:
+    name: Stop AKS Cluster
+    needs: print-info
+    uses: ./.github/workflows/publicrecordingbot_manage-cluster.yml
+    with:
+      action: 'stop'
+      cluster-name: ${{ vars.AKS_CLUSTER_NAME }}
+      resource-group: ${{ vars.AKS_RESOURCE_GROUP }}
+      subscription: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
+  notify-completion:
+    name: Notify Completion
+    needs: stop-cluster
+    runs-on: ubuntu-latest
+    
+    steps:
     - name: Notify completion
       run: |
         echo "✅ Scheduled cluster stop completed successfully"
