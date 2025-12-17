@@ -140,8 +140,9 @@ jobs:
         needs.check-recording-bot-changes.outputs.scripts == 'True' || 
         needs.check-recording-bot-changes.outputs.src == 'True'
       )
-    uses: ./.github/workflows/publicrecordingbot_start-cluster.yml
+    uses: ./.github/workflows/publicrecordingbot_manage-cluster.yml
     with:
+      action: 'start'
       cluster-name: ${{ vars.AKS_CLUSTER_NAME }}
       resource-group: ${{ vars.AKS_RESOURCE_GROUP }}
       subscription: ${{ vars.AZURE_SUBSCRIPTION_ID  }}

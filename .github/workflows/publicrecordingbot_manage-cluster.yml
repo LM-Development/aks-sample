@@ -1,9 +1,14 @@
-name: Start AKS Cluster
+name: Manage AKS Cluster
 
 # Triggered by other workflows
 on:
   workflow_call:
     inputs:
+      action:
+        description: 'Action to perform: start or stop'
+        required: false
+        type: string
+        default: 'start'
       cluster-name:
         description: 'Name of the AKS cluster'
         required: false
@@ -22,13 +27,13 @@ on:
     outputs:
       cluster-status:
         description: 'Status of the cluster after the workflow'
-        value: ${{ jobs.start-cluster.outputs.cluster-status }}
+        value: ${{ jobs.manage-cluster.outputs.cluster-status }}
       cluster-fqdn:
         description: 'FQDN of the cluster'
-        value: ${{ jobs.start-cluster.outputs.cluster-fqdn }}
+        value: ${{ jobs.manage-cluster.outputs.cluster-fqdn }}
       cluster-ip:
         description: 'Public IP of the cluster'
-        value: ${{ jobs.start-cluster.outputs.cluster-ip }}
+        value: ${{ jobs.manage-cluster.outputs.cluster-ip }}
     secrets:
       AZURE_CREDENTIALS:
         description: 'Azure credentials for authentication'
@@ -37,6 +42,14 @@ on:
   # Allow manual triggering for testing
   workflow_dispatch:
     inputs:
+      action:
+        description: 'Action to perform: start or stop'
+        required: false
+        type: choice
+        default: 'start'
+        options:
+        - 'start'
+        - 'stop'
       cluster-name:
         description: 'Name of the AKS cluster'
         required: false
@@ -54,13 +67,14 @@ on:
         default: ''
 
 env:
+  ACTION: ${{ inputs.action || 'start' }}
   CLUSTER_NAME: ${{ inputs.cluster-name || 'aks-samples' }}
   RESOURCE_GROUP: ${{ inputs.resource-group || 'aks-samples' }}
   AZURE_SUBSCRIPTION_ID: ${{ inputs.subscription || '' }}
 
 jobs:
-  start-cluster:
-    name: Ensure AKS Cluster is Running
+  manage-cluster:
+    name: ${{ (inputs.action == 'stop' && 'Stop AKS Cluster') || 'Ensure AKS Cluster is Running' }}
     runs-on: ubuntu-latest
     outputs:
       cluster-status: ${{ steps.cluster-status.outputs.status }}
@@ -68,6 +82,14 @@ jobs:
       cluster-ip: ${{ steps.cluster-info.outputs.ip }}
 
     steps:
+    - name: Validate action parameter
+      run: |
+        if [ "${{ env.ACTION }}" != "start" ] && [ "${{ env.ACTION }}" != "stop" ]; then
+          echo "❌ Invalid action: ${{ env.ACTION }}. Must be 'start' or 'stop'"
+          exit 1
+        fi
+        echo "✅ Action validated: ${{ env.ACTION }}"
+
     - name: Checkout code
       uses: actions/checkout@v4
 
@@ -110,20 +132,34 @@ jobs:
         else
           echo "exists=false" >> $GITHUB_OUTPUT
           echo "❌ Cluster ${{ env.CLUSTER_NAME }} does not exist in resource group ${{ env.RESOURCE_GROUP }}"
-          echo "❌ This workflow requires an existing AKS cluster to start"
+          echo "❌ This workflow requires an existing AKS cluster to ${{ env.ACTION }}"
           exit 1
         fi
 
     - name: Start AKS cluster if stopped
-      if: steps.cluster-check.outputs.exists == 'true' && steps.cluster-check.outputs.power-state == 'Stopped'
+      if: env.ACTION == 'start' && steps.cluster-check.outputs.exists == 'true' && steps.cluster-check.outputs.power-state == 'Stopped'
       run: |
         echo "🔄 Starting AKS cluster ${{ env.CLUSTER_NAME }}"
         az aks start --name ${{ env.CLUSTER_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --subscription ${{ env.AZURE_SUBSCRIPTION_ID }}
         echo "✅ AKS cluster started successfully"
 
-    - name: Wait for cluster to be ready
+    - name: Stop AKS cluster if running
+      if: env.ACTION == 'stop' && steps.cluster-check.outputs.exists == 'true' && steps.cluster-check.outputs.power-state == 'Running'
       run: |
-        echo "⏳ Waiting for cluster to be in Running state..."
+        echo "🛑 Stopping AKS cluster ${{ env.CLUSTER_NAME }}"
+        az aks stop --name ${{ env.CLUSTER_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --subscription ${{ env.AZURE_SUBSCRIPTION_ID }}
+        echo "✅ AKS cluster stopped successfully"
+
+    - name: Wait for cluster state change
+      run: |
+        if [ "${{ env.ACTION }}" = "start" ]; then
+          echo "⏳ Waiting for cluster to be in Running state..."
+          EXPECTED_STATE="Running"
+        else
+          echo "⏳ Waiting for cluster to be in Stopped state..."
+          EXPECTED_STATE="Stopped"
+        fi
+        
         timeout=600  # 10 minutes timeout
         elapsed=0
         interval=30
@@ -134,8 +170,8 @@ jobs:
 
           echo "🔍 Current state - Power: $POWER_STATE, Provisioning: $PROVISIONING_STATE"
     
-          if [ "$POWER_STATE" = "Running" ] && [ "$PROVISIONING_STATE" = "Succeeded" ]; then
-            echo "✅ Cluster is ready!"
+          if [ "$POWER_STATE" = "$EXPECTED_STATE" ] && [ "$PROVISIONING_STATE" = "Succeeded" ]; then
+            echo "✅ Cluster is in expected state: $EXPECTED_STATE"
             break
           fi
           
@@ -149,17 +185,19 @@ jobs:
         done
         
         if [ $elapsed -ge $timeout ]; then
-          echo "❌ Timeout waiting for cluster to be ready"
+          echo "❌ Timeout waiting for cluster to reach expected state: $EXPECTED_STATE"
           exit 1
         fi
 
     - name: Get cluster credentials
+      if: env.ACTION == 'start'
       run: |
         echo "🔑 Getting cluster credentials"
         az aks get-credentials --name ${{ env.CLUSTER_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --overwrite-existing --subscription ${{ env.AZURE_SUBSCRIPTION_ID }}
         echo "✅ Credentials configured successfully"
 
     - name: Verify cluster connectivity
+      if: env.ACTION == 'start'
       run: |
         echo "🔍 Verifying cluster connectivity"
         kubectl cluster-info
@@ -167,6 +205,7 @@ jobs:
         echo "✅ Cluster is accessible and nodes are ready"
 
     - name: Get cluster information
+      if: env.ACTION == 'start'
       id: cluster-info
       run: |
         IP_ID=$(az aks show --name ${{ env.CLUSTER_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --query "networkProfile.loadBalancerProfile.effectiveOutboundIPs[0].id" -o tsv --subscription ${{ env.AZURE_SUBSCRIPTION_ID }})
@@ -178,13 +217,22 @@ jobs:
     - name: Set cluster status output
       id: cluster-status
       run: |
-        echo "status=running" >> $GITHUB_OUTPUT
-        echo "✅ Cluster is running and ready for deployments"
+        if [ "${{ env.ACTION }}" = "start" ]; then
+          echo "status=running" >> $GITHUB_OUTPUT
+          echo "✅ Cluster is running and ready for deployments"
+        else
+          echo "status=stopped" >> $GITHUB_OUTPUT
+          echo "✅ Cluster has been stopped successfully"
+        fi
 
     - name: Display cluster summary
       run: |
         echo "📋 Cluster Summary:"
         echo "  Name: ${{ env.CLUSTER_NAME }}"
         echo "  Resource Group: ${{ env.RESOURCE_GROUP }}"
-        echo "  FQDN: ${{ steps.cluster-info.outputs.fqdn }}"
-        echo "  Status: Ready for deployments"
+        if [ "${{ env.ACTION }}" = "start" ]; then
+          echo "  FQDN: ${{ steps.cluster-info.outputs.fqdn }}"
+          echo "  Status: Ready for deployments"
+        else
+          echo "  Status: Stopped to save costs"
+        fi
