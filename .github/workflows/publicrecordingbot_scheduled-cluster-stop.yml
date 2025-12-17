@@ -49,8 +49,6 @@ jobs:
         cluster-name: ${{ env.CLUSTER_NAME }}
         resource-group: ${{ env.RESOURCE_GROUP }}
         subscription: ${{ env.SUBSCRIPTION_ID }}
-      secrets:
-        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
     - name: Notify completion
       run: |
