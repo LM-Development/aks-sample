@@ -8,22 +8,18 @@ on:
         description: 'Action to perform: start or stop'
         required: false
         type: string
-        default: 'start'
       cluster-name:
         description: 'Name of the AKS cluster'
         required: false
         type: string
-        default: 'aks-sample-cluster'
       resource-group:
         description: 'Resource group containing the AKS cluster'
         required: false
         type: string
-        default: 'aks-sample-rg'
       subscription:
         description: 'Azure subscription ID'
         required: false
         type: string
-        default: ''
     outputs:
       cluster-status:
         description: 'Status of the cluster after the workflow'
@@ -46,7 +42,6 @@ on:
         description: 'Action to perform: start or stop'
         required: false
         type: choice
-        default: 'start'
         options:
         - 'start'
         - 'stop'
@@ -54,23 +49,20 @@ on:
         description: 'Name of the AKS cluster'
         required: false
         type: string
-        default: 'aks-sample-cluster'
       resource-group:
         description: 'Resource group containing the AKS cluster'
         required: false
         type: string
-        default: 'aks-sample-rg'
       subscription:
         description: 'Azure subscription ID'
         required: false
         type: string
-        default: ''
 
 env:
   ACTION: ${{ inputs.action || 'start' }}
-  CLUSTER_NAME: ${{ inputs.cluster-name || 'aks-samples' }}
-  RESOURCE_GROUP: ${{ inputs.resource-group || 'aks-samples' }}
-  AZURE_SUBSCRIPTION_ID: ${{ inputs.subscription || '' }}
+  CLUSTER_NAME: ${{ inputs.cluster-name || vars.AKS_CLUSTER_NAME }}
+  RESOURCE_GROUP: ${{ inputs.resource-group || vars.AKS_RESOURCE_GROUP }}
+  AZURE_SUBSCRIPTION_ID: ${{ inputs.subscription || vars.AZURE_SUBSCRIPTION_ID }}
 
 jobs:
   manage-cluster:
