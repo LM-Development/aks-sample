@@ -1,0 +1,62 @@
+name: Scheduled AKS Cluster Stop
+
+# Stop the AKS cluster every day at midnight UTC to save costs
+on:
+  schedule:
+    # Run at 00:00 UTC every day (midnight)
+    - cron: '0 0 * * *'
+  
+  # Allow manual triggering for testing
+  workflow_dispatch:
+    inputs:
+      cluster-name:
+        description: 'Name of the AKS cluster'
+        required: false
+        type: string
+        default: 'aks-sample-cluster'
+      resource-group:
+        description: 'Resource group containing the AKS cluster'
+        required: false
+        type: string
+        default: 'aks-sample-rg'
+      subscription:
+        description: 'Azure subscription ID'
+        required: false
+        type: string
+        default: ''
+
+env:
+  # Use environment variables if manual dispatch inputs are not provided
+  CLUSTER_NAME: ${{ inputs.cluster-name || vars.AKS_CLUSTER_NAME || 'aks-sample-cluster' }}
+  RESOURCE_GROUP: ${{ inputs.resource-group || vars.AKS_RESOURCE_GROUP || 'aks-sample-rg' }}
+  SUBSCRIPTION_ID: ${{ inputs.subscription || vars.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+  stop-cluster:
+    name: Stop AKS Cluster
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Print scheduled stop information
+      run: |
+        echo "🕛 Scheduled AKS cluster stop initiated"
+        echo "📅 Current time: $(date -u)"
+        echo "🎯 Target cluster: ${{ env.CLUSTER_NAME }}"
+        echo "📍 Resource group: ${{ env.RESOURCE_GROUP }}"
+        echo "💰 Purpose: Cost optimization by stopping cluster overnight"
+
+    - name: Stop AKS Cluster
+      uses: ./.github/workflows/publicrecordingbot_manage-cluster.yml
+      with:
+        action: 'stop'
+        cluster-name: ${{ env.CLUSTER_NAME }}
+        resource-group: ${{ env.RESOURCE_GROUP }}
+        subscription: ${{ env.SUBSCRIPTION_ID }}
+      secrets:
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Notify completion
+      run: |
+        echo "✅ Scheduled cluster stop completed successfully"
+        echo "💡 The cluster will need to be started manually or via workflow when needed"
+        echo "📊 This helps reduce Azure costs during off-hours"
