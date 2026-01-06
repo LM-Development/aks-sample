@@ -20,9 +20,6 @@ on:
 
 env:
   PR_NUMBER: ${{ github.event.number }}
-  IMAGE_TAG: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'latest' }}
-  ENVIRONMENT_NAME: aks-sample
-  PORT: '28550'
 
 concurrency:
   group: aks-sample-environment
@@ -255,7 +252,7 @@ jobs:
     permissions:
       packages: write
     with:
-      tag: ${{ env.IMAGE_TAG }}
+      tag: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'latest' }}
       cr-namespace-repository: ${{ vars.CR_NAMESPACE_REPOSITORY }}
     secrets: inherit
 
@@ -271,8 +268,8 @@ jobs:
       )
     uses: ./.github/workflows/routine-deployenvironment.yml
     with:
-      environment-name: ${{ env.ENVIRONMENT_NAME }}
-      port: ${{ env.PORT }}
+      environment-name: aks-sample
+      port: '28550'
       cluster-name: ${{ vars.AKS_CLUSTER_NAME }}
       resource-group: ${{ vars.AKS_RESOURCE_GROUP }}
       subscription: ${{ vars.AZURE_SUBSCRIPTION_ID }}
@@ -294,7 +291,7 @@ jobs:
     uses: ./.github/workflows/routine-runtests.yml
     with:
       headless-mode: true
-      test-environment: ${{ env.IMAGE_TAG }}
+      test-environment: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'latest' }}
       github-issue-number: ${{ github.event.number || '' }}
     secrets:
       USER_A_USERNAME: ${{ vars.TEST_USER_A_USERNAME }}
