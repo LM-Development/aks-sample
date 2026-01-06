@@ -23,10 +23,6 @@ jobs:
     permissions:
       packages: write
 
-    defaults:
-      run:
-        working-directory: Samples/PublicSamples/RecordingBot
-
     outputs:
       image-tag: ${{ steps.generate-tag.outputs.tag }}
 
