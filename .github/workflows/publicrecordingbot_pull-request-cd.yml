@@ -6,7 +6,9 @@ on:
       - main
       - master
     paths:
-      - Samples/PublicSamples/RecordingBot/**
+      - src
+      - scripts
+      - build
       - .github/workflows/publicrecordingbot_pull-request-cd.yml
 
 jobs:
