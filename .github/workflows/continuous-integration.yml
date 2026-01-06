@@ -286,8 +286,8 @@ jobs:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
   run-tests:
-    needs: [check-recording-bot-changes, chart-version-checks, start-cluster, build-docker-image, deploy-to-environment, retag-and-push]
-    if: needs.deploy-to-environment.result == 'success'
+    needs: [check-recording-bot-changes, chart-version-checks, start-cluster, build-docker-image, deploy-to-environment]
+    if: always() && needs.deploy-to-environment.result == 'success'
     uses: ./.github/workflows/routine-runtests.yml
     with:
       headless-mode: true
