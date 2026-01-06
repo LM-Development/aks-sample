@@ -7,12 +7,6 @@ change the directory since building the Docker container we can continue with [d
 cd C:\Users\User\recordingbottutorial
 ```
 
-And change the directory to the sample project in the repository.
-
-```powershell
-cd .\aks-sample\Samples\PublicSamples\RecordingBot\
-```
-
 ## Deploy Cert Manager
 
 Like any local media bots, the sample needs a properly signed certificate, with a trust chain up to
