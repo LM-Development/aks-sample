@@ -7,8 +7,9 @@ while($continue)
     try
     {
         $result = Invoke-WebRequest -Uri "http://localhost:$CallSignalingPort2/calls" -UseBasicParsing
+        $calls = $result.Content | ConvertFrom-Json
 
-        if ($result.Content)
+        if ($calls.Count -gt 0)
         {
             Start-Sleep -Seconds 60
         }
