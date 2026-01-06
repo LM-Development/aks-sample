@@ -11,6 +11,10 @@ env:
   PR_NUMBER: ${{ github.event.number }}
   IMAGE_TAG: pr-${{ github.event.number }}
 
+concurrency:
+  group: ci
+  cancel-in-progress: false
+
 jobs:
   check-recording-bot-changes:
     runs-on: ubuntu-latest
