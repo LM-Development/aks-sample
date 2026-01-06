@@ -12,7 +12,7 @@ env:
   IMAGE_TAG: pr-${{ github.event.number }}
 
 concurrency:
-  group: ci
+  group: aks-sample-environment
   cancel-in-progress: false
 
 jobs:
