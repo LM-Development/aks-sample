@@ -25,6 +25,7 @@ while($continue)
     }
     catch
     {
-        Write-Host "Error while calling endpoint."
+        Write-Host "Error while calling endpoint: $_"
+        Start-Sleep -Seconds 10
     }
 }
