@@ -32,7 +32,7 @@ jobs:
           
           # Check if a file has changed (added, modified, deleted)
           $BuildDiff = $diff | Where-Object { $_ -match '^build/' }
-          $DeployDiff = $diff | Where-Object { $_ -match '^Sdeploy/' }
+          $DeployDiff = $diff | Where-Object { $_ -match '^deploy/' }
           $DocsDiff = $diff | Where-Object { $_ -match '^docs/' -or $_ -match '.md$' }
           $ScriptsDiff = $diff | Where-Object { $_ -match '^scripts/' }
           $SrcDiff = $diff | Where-Object { $_ -match '^src/' }
