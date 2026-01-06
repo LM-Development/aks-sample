@@ -1,14 +1,28 @@
 name: Continuous Integration
-run-name: Pull Request "${{github.event.pull_request.title}}" - Complete CI Pipeline
+run-name: ${{ github.event_name == 'pull_request' && format('Pull Request "{0}" - Complete CI Pipeline', github.event.pull_request.title) || (github.event_name == 'schedule' && 'Scheduled Weekly Deployment and Testing' || format('Main Branch Deploy - {0}', github.sha)) }}
 
 on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
+    paths:
+      - src
+      - scripts
+      - build
+      - deploy
+      - .github/workflows/continuous-integration.yml
+  schedule:
+    # Sunday at 2 PM UTC (Sunday afternoon)
+    - cron: '0 14 * * 0'
 
 env:
   PR_NUMBER: ${{ github.event.number }}
-  IMAGE_TAG: pr-${{ github.event.number }}
+  IMAGE_TAG: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'latest' }}
+  ENVIRONMENT_NAME: aks-sample
+  PORT: '28550'
 
 concurrency:
   group: aks-sample-environment
@@ -28,30 +42,39 @@ jobs:
       - shell: pwsh
         id: changes
         run: |
-          # Diff latest commit with latest main commit for Recording Bot
-          git fetch
-          git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
-          $diff = git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
-          
-          # Check if a file has changed (added, modified, deleted)
-          $BuildDiff = $diff | Where-Object { $_ -match '^build/' }
-          $DeployDiff = $diff | Where-Object { $_ -match '^deploy/' }
-          $DocsDiff = $diff | Where-Object { $_ -match '^docs/' -or $_ -match '.md$' }
-          $ScriptsDiff = $diff | Where-Object { $_ -match '^scripts/' }
-          $SrcDiff = $diff | Where-Object { $_ -match '^src/' }
+          if ('${{ github.event_name }}' -eq 'push' -or '${{ github.event_name }}' -eq 'schedule') {
+            # For main branch pushes and scheduled runs, always consider all changes as relevant
+            echo "build=True" >> $env:GITHUB_OUTPUT
+            echo "deploy=True" >> $env:GITHUB_OUTPUT
+            echo "docs=True" >> $env:GITHUB_OUTPUT
+            echo "scripts=True" >> $env:GITHUB_OUTPUT
+            echo "src=True" >> $env:GITHUB_OUTPUT
+          } else {
+            # For pull requests, check actual changes
+            git fetch
+            git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
+            $diff = git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
+            
+            # Check if a file has changed (added, modified, deleted)
+            $BuildDiff = $diff | Where-Object { $_ -match '^build/' }
+            $DeployDiff = $diff | Where-Object { $_ -match '^deploy/' }
+            $DocsDiff = $diff | Where-Object { $_ -match '^docs/' -or $_ -match '.md$' }
+            $ScriptsDiff = $diff | Where-Object { $_ -match '^scripts/' }
+            $SrcDiff = $diff | Where-Object { $_ -match '^src/' }
 
-          $HasBuildDiff = $BuildDiff.Length -gt 0
-          $HasDeployDiff = $DeployDiff.Length -gt 0
-          $HasDocsDiff = $DocsDiff.Length -gt 0
-          $HasScriptsDiff = $ScriptsDiff.Length -gt 0
-          $HasSrcDiff = $SrcDiff.Length -gt 0
-          
-          # Set the outputs
-          echo "build=$HasBuildDiff" >> $env:GITHUB_OUTPUT
-          echo "deploy=$HasDeployDiff" >> $env:GITHUB_OUTPUT
-          echo "docs=$HasDocsDiff" >> $env:GITHUB_OUTPUT
-          echo "scripts=$HasScriptsDiff" >> $env:GITHUB_OUTPUT
-          echo "src=$HasSrcDiff" >> $env:GITHUB_OUTPUT
+            $HasBuildDiff = $BuildDiff.Length -gt 0
+            $HasDeployDiff = $DeployDiff.Length -gt 0
+            $HasDocsDiff = $DocsDiff.Length -gt 0
+            $HasScriptsDiff = $ScriptsDiff.Length -gt 0
+            $HasSrcDiff = $SrcDiff.Length -gt 0
+            
+            # Set the outputs
+            echo "build=$HasBuildDiff" >> $env:GITHUB_OUTPUT
+            echo "deploy=$HasDeployDiff" >> $env:GITHUB_OUTPUT
+            echo "docs=$HasDocsDiff" >> $env:GITHUB_OUTPUT
+            echo "scripts=$HasScriptsDiff" >> $env:GITHUB_OUTPUT
+            echo "src=$HasSrcDiff" >> $env:GITHUB_OUTPUT
+          }
 
   chart-version-checks:
     runs-on: ubuntu-latest
@@ -89,12 +112,15 @@ jobs:
           helm lint
           echo "✅ Helm chart lint passed"
 
-      - name: Check App Version Change
+      - name: Check App Version Change (PR only)
         id: app-version-check
         if: |
-          needs.check-recording-bot-changes.outputs.build == 'True' || 
-          needs.check-recording-bot-changes.outputs.scripts == 'True' || 
-          needs.check-recording-bot-changes.outputs.src == 'True'
+          github.event_name == 'pull_request' &&
+          (
+            needs.check-recording-bot-changes.outputs.build == 'True' || 
+            needs.check-recording-bot-changes.outputs.scripts == 'True' || 
+            needs.check-recording-bot-changes.outputs.src == 'True'
+          )
         shell: bash
         run: |
             echo "🔍 Checking app version changes..."
@@ -112,8 +138,8 @@ jobs:
             [ "$newerVersion" = "$newVersion" ] || exit 1
             echo "✅ Success app Version was updated!"
 
-      - name: Check Chart Version Change
-        if: needs.check-recording-bot-changes.outputs.deploy == 'True'
+      - name: Check Chart Version Change (PR only)
+        if: github.event_name == 'pull_request' && needs.check-recording-bot-changes.outputs.deploy == 'True'
         shell: bash
         run: |
             echo "🔍 Checking chart version changes..."
@@ -130,6 +156,67 @@ jobs:
             newerVersion=$(echo -e "$oldVersion\n$newVersion" | sort -V | tail -1)
             [ "$newerVersion" = "$newVersion" ] || exit 1
             echo "✅ Success Version was updated!"
+
+  retag-and-push:
+    runs-on: ubuntu-latest
+    needs: [check-recording-bot-changes, chart-version-checks]
+    if: |
+      (github.event_name == 'push' || github.event_name == 'schedule') &&
+      needs.chart-version-checks.result == 'success' &&
+      (
+        needs.check-recording-bot-changes.outputs.build == 'True' || 
+        needs.check-recording-bot-changes.outputs.scripts == 'True' || 
+        needs.check-recording-bot-changes.outputs.src == 'True'
+      )
+
+    permissions:
+      packages: write
+
+    outputs:
+      image-exists: ${{ steps.check-image.outputs.image-exists }}
+
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Docker image tag
+        id: generate-tag
+        run: |
+            hash=$(find src build scripts -type f -exec sha256sum {} \; | sort | sha256sum | awk '{print $1}')
+            echo "tag=$hash" >> $GITHUB_OUTPUT
+      
+      - name: Check if image exists
+        id: check-image
+        run: |
+          if docker manifest inspect ${{ vars.CR_NAMESPACE_REPOSITORY }}:${{ steps.generate-tag.outputs.tag }} > /dev/null 2>&1; then
+            echo "Image already exists"
+            echo "image-exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "image-exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Pull PR image and retag as latest
+        if: steps.check-image.outputs.image-exists == 'true'
+        run: |
+          TAG="${{ steps.generate-tag.outputs.tag }}"
+          REGISTRY="${{ vars.CR_NAMESPACE_REPOSITORY }}"
+
+          echo "🔍 Pulling image with tag: $TAG"
+          docker pull ${REGISTRY}:${TAG}
+
+          echo "🏷️ Retagging image as latest"
+          docker tag ${REGISTRY}:${TAG} ${REGISTRY}:latest
+
+          echo "🚀 Pushing latest image"
+          docker push ${REGISTRY}:latest
+
+          echo "✅ Successfully promoted ${REGISTRY}:${TAG} to ${REGISTRY}:latest"
 
   start-cluster:
     needs: [check-recording-bot-changes, chart-version-checks]
@@ -151,34 +238,41 @@ jobs:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
   build-docker-image:
-    needs: [check-recording-bot-changes, chart-version-checks]
+    needs: [check-recording-bot-changes, chart-version-checks, retag-and-push]
     if: |
+      always() &&
       needs.chart-version-checks.result == 'success' &&
       (
         needs.check-recording-bot-changes.outputs.build == 'True' || 
         needs.check-recording-bot-changes.outputs.src == 'True' ||
         needs.check-recording-bot-changes.outputs.scripts == 'True'
+      ) &&
+      (
+        github.event_name == 'pull_request' ||
+        ((github.event_name == 'push' || github.event_name == 'schedule') && needs.retag-and-push.outputs.image-exists == 'false')
       )
     uses: ./.github/workflows/routine-buildimage.yml
     permissions:
       packages: write
     with:
+      tag: ${{ env.IMAGE_TAG }}
       cr-namespace-repository: ${{ vars.CR_NAMESPACE_REPOSITORY }}
     secrets: inherit
 
-  deploy-to-test-environment:
-    needs: [check-recording-bot-changes, chart-version-checks, start-cluster, build-docker-image]
+  deploy-to-environment:
+    needs: [check-recording-bot-changes, chart-version-checks, start-cluster, build-docker-image, retag-and-push]
     if: |
       always() &&
       needs.start-cluster.result == 'success' &&
       (
         needs.build-docker-image.result == 'success' ||
-        (needs.check-recording-bot-changes.outputs.deploy == 'True' && needs.build-docker-image.result == 'skipped')
+        (needs.retag-and-push.result == 'success' && (github.event_name == 'push' || github.event_name == 'schedule')) ||
+        (needs.check-recording-bot-changes.outputs.deploy == 'True' && (needs.build-docker-image.result == 'skipped' || needs.retag-and-push.result == 'skipped'))
       )
     uses: ./.github/workflows/routine-deployenvironment.yml
     with:
-      environment-name: aks-sample
-      port: '28550'
+      environment-name: ${{ env.ENVIRONMENT_NAME }}
+      port: ${{ env.PORT }}
       cluster-name: ${{ vars.AKS_CLUSTER_NAME }}
       resource-group: ${{ vars.AKS_RESOURCE_GROUP }}
       subscription: ${{ vars.AZURE_SUBSCRIPTION_ID }}
@@ -195,13 +289,13 @@ jobs:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
   run-tests:
-    needs: [check-recording-bot-changes, chart-version-checks, start-cluster, build-docker-image, deploy-to-test-environment]
-    if: needs.deploy-to-test-environment.result == 'success'
+    needs: [check-recording-bot-changes, chart-version-checks, start-cluster, build-docker-image, deploy-to-environment, retag-and-push]
+    if: needs.deploy-to-environment.result == 'success'
     uses: ./.github/workflows/routine-runtests.yml
     with:
       headless-mode: true
-      test-environment: pr-${{ github.event.number }}
-      github-issue-number: ${{ github.event.number }}
+      test-environment: ${{ env.IMAGE_TAG }}
+      github-issue-number: ${{ github.event.number || '' }}
     secrets:
       USER_A_USERNAME: ${{ vars.TEST_USER_A_USERNAME }}
       USER_A_PASSWORD: ${{ secrets.TEST_USER_A_PASSWORD }}
