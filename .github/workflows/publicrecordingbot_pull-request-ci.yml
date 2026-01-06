@@ -6,8 +6,6 @@ on:
     branches:
       - main
       - master
-    paths:
-      - Samples/PublicSamples/RecordingBot/**
 
 env:
   PR_NUMBER: ${{ github.event.number }}
@@ -29,15 +27,15 @@ jobs:
         run: |
           # Diff latest commit with latest main commit for Recording Bot
           git fetch
-          git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- Samples/PublicSamples/RecordingBot/
-          $diff = git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- Samples/PublicSamples/RecordingBot/
+          git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
+          $diff = git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
           
           # Check if a file has changed (added, modified, deleted)
-          $BuildDiff = $diff | Where-Object { $_ -match '^Samples/PublicSamples/RecordingBot/build/' }
-          $DeployDiff = $diff | Where-Object { $_ -match '^Samples/PublicSamples/RecordingBot/deploy/' }
-          $DocsDiff = $diff | Where-Object { $_ -match '^Samples/PublicSamples/RecordingBot/docs/' -or $_ -match '.md$' }
-          $ScriptsDiff = $diff | Where-Object { $_ -match '^Samples/PublicSamples/RecordingBot/scripts/' }
-          $SrcDiff = $diff | Where-Object { $_ -match '^Samples/PublicSamples/RecordingBot/src/' }
+          $BuildDiff = $diff | Where-Object { $_ -match '^build/' }
+          $DeployDiff = $diff | Where-Object { $_ -match '^Sdeploy/' }
+          $DocsDiff = $diff | Where-Object { $_ -match '^docs/' -or $_ -match '.md$' }
+          $ScriptsDiff = $diff | Where-Object { $_ -match '^scripts/' }
+          $SrcDiff = $diff | Where-Object { $_ -match '^src/' }
 
           $HasBuildDiff = $BuildDiff.Length -gt 0
           $HasDeployDiff = $DeployDiff.Length -gt 0
@@ -63,7 +61,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: Samples/PublicSamples/RecordingBot/deploy
+        working-directory: deploy
     
     outputs:
       app-version-check-passed: ${{ steps.app-version-check.outcome }}
@@ -81,7 +79,7 @@ jobs:
           version: 'latest'
 
       - name: Lint Helm Chart
-        working-directory: Samples/PublicSamples/RecordingBot/deploy/teams-recording-bot
+        working-directory: deploy/teams-recording-bot
         if: needs.check-recording-bot-changes.outputs.deploy == 'True'
         run: |
           echo "🔍 Linting Helm chart..."
@@ -97,7 +95,7 @@ jobs:
         shell: bash
         run: |
             echo "🔍 Checking app version changes..."
-            oldVersion=$(MSYS_NO_PATHCONV=1 git show remotes/origin/$GITHUB_BASE_REF:Samples/PublicSamples/RecordingBot/deploy/teams-recording-bot/Chart.yaml | sed -n "s/^appVersion: \([0-9\.]*\)$/\1/p")
+            oldVersion=$(MSYS_NO_PATHCONV=1 git show remotes/origin/$GITHUB_BASE_REF:deploy/teams-recording-bot/Chart.yaml | sed -n "s/^appVersion: \([0-9\.]*\)$/\1/p")
             echo "Previous app Version: $oldVersion"
             [ -z "$oldVersion" ] && exit 1
 
@@ -116,7 +114,7 @@ jobs:
         shell: bash
         run: |
             echo "🔍 Checking chart version changes..."
-            oldVersion=$(MSYS_NO_PATHCONV=1 git show remotes/origin/$GITHUB_BASE_REF:Samples/PublicSamples/RecordingBot/deploy/teams-recording-bot/Chart.yaml | sed -n "s/^version: \([0-9\.]*\)$/\1/p")
+            oldVersion=$(MSYS_NO_PATHCONV=1 git show remotes/origin/$GITHUB_BASE_REF:deploy/teams-recording-bot/Chart.yaml | sed -n "s/^version: \([0-9\.]*\)$/\1/p")
             echo "Previous Version: $oldVersion"
             [ -z "$oldVersion" ] && exit 1
     

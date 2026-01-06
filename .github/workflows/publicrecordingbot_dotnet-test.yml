@@ -58,7 +58,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: Samples/PublicSamples/RecordingBot/src
+        working-directory: src
 
     steps:
       - uses: actions/checkout@v4
@@ -191,7 +191,7 @@ jobs:
         with:
           name: playwright-report-${{ inputs.test-environment }}
           path: |
-            Samples/PublicSamples/RecordingBot/src/RecordingBot.UiTests/bin/Debug/net8.0/playwright-report/
+            src/RecordingBot.UiTests/bin/Debug/net8.0/playwright-report/
           retention-days: 30
 
   post-test-results:

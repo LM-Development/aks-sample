@@ -5,14 +5,10 @@ on:
     branches: 
       - main
       - master
-    paths:
-      - Samples/PublicSamples/RecordingBot/**
   pull_request:
     branches: 
       - main
       - master
-    paths:
-      - Samples/PublicSamples/RecordingBot/**
   schedule:
     - cron: "24 5 * * 5"
 
@@ -27,7 +23,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: Samples/PublicSamples/RecordingBot/src
+        working-directory: src
 
     strategy:
       fail-fast: false
