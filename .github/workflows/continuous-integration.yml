@@ -234,8 +234,40 @@ jobs:
     secrets: 
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
-  build-docker-image:
+  generate-image-tag:
     needs: [check-recording-bot-changes, chart-version-checks, retag-and-push]
+    if: |
+      always() &&
+      needs.chart-version-checks.result == 'success' &&
+      (
+        needs.check-recording-bot-changes.outputs.build == 'True' || 
+        needs.check-recording-bot-changes.outputs.src == 'True' ||
+        needs.check-recording-bot-changes.outputs.scripts == 'True'
+      ) &&
+      (
+        github.event_name == 'pull_request' ||
+        ((github.event_name == 'push' || github.event_name == 'schedule') && needs.retag-and-push.outputs.image-exists == 'false')
+      )
+    runs-on: ubuntu-latest
+    
+    outputs:
+      image-tag: ${{ steps.generate-tag.outputs.tag }}
+    
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Generate content-based image tag
+        id: generate-tag
+        run: |
+            hash=$(find src build scripts -type f -exec sha256sum {} \; | sort | sha256sum | awk '{print $1}')
+            if [ '${{ github.event_name }}' = 'pull_request' ]; then
+              echo "tag=pr-${{ github.event.number }}-${hash:0:8}" >> $GITHUB_OUTPUT
+            else
+              echo "tag=latest" >> $GITHUB_OUTPUT
+            fi
+
+  build-docker-image:
+    needs: [check-recording-bot-changes, chart-version-checks, retag-and-push, generate-image-tag]
     if: |
       always() &&
       needs.chart-version-checks.result == 'success' &&
@@ -252,12 +284,12 @@ jobs:
     permissions:
       packages: write
     with:
-      tag: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'latest' }}
+      tag: ${{ needs.generate-image-tag.outputs.image-tag }}
       cr-namespace-repository: ${{ vars.CR_NAMESPACE_REPOSITORY }}
     secrets: inherit
 
   deploy-to-environment:
-    needs: [check-recording-bot-changes, chart-version-checks, start-cluster, build-docker-image, retag-and-push]
+    needs: [check-recording-bot-changes, chart-version-checks, start-cluster, build-docker-image, retag-and-push, generate-image-tag]
     if: |
       always() &&
       needs.start-cluster.result == 'success' &&
@@ -277,7 +309,7 @@ jobs:
       host: ${{ needs.start-cluster.outputs.cluster-fqdn }}
       image-registry: ${{ vars.CR_REGISTRY }}
       image-name: ${{ vars.CR_IMAGE_NAME }}
-      image-tag: ${{ needs.build-docker-image.outputs.image-tag || 'latest' }}
+      image-tag: ${{ needs.generate-image-tag.outputs.image-tag || 'latest' }}
       public-ip: ${{ needs.start-cluster.outputs.cluster-ip }}
       tls-email: ${{ vars.TLS_EMAIL }}
       enable-nginx: true
@@ -286,12 +318,12 @@ jobs:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
   run-tests:
-    needs: [check-recording-bot-changes, chart-version-checks, start-cluster, build-docker-image, deploy-to-environment]
+    needs: [check-recording-bot-changes, chart-version-checks, start-cluster, build-docker-image, deploy-to-environment, generate-image-tag]
     if: always() && needs.deploy-to-environment.result == 'success'
     uses: ./.github/workflows/routine-runtests.yml
     with:
       headless-mode: true
-      test-environment: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'latest' }}
+      test-environment: ${{ needs.generate-image-tag.outputs.image-tag || 'latest' }}
       github-issue-number: ${{ github.event.number || '' }}
     secrets:
       USER_A_USERNAME: ${{ vars.TEST_USER_A_USERNAME }}
