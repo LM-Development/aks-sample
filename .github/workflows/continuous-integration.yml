@@ -170,10 +170,11 @@ jobs:
   deploy-to-test-environment:
     needs: [check-recording-bot-changes, chart-version-checks, start-cluster, build-docker-image]
     if: |
+      always() &&
       needs.start-cluster.result == 'success' &&
       (
         needs.build-docker-image.result == 'success' ||
-        needs.check-recording-bot-changes.outputs.deploy == 'True'
+        (needs.check-recording-bot-changes.outputs.deploy == 'True' && needs.build-docker-image.result == 'skipped')
       )
     uses: ./.github/workflows/routine-deployenvironment.yml
     with:
