@@ -1,4 +1,4 @@
-name: Recording Bot Release Docker Image
+name: Continuous Delivery
 
 on:
   push:
@@ -62,7 +62,7 @@ jobs:
   build-fallback:
     needs: retag-and-push
     if: needs.retag-and-push.outputs.image-exists == 'false'
-    uses: ./.github/workflows/publicrecordingbot_docker-build.yml
+    uses: ./.github/workflows/routine-buildimage.yml
     permissions:
       packages: write
     with:

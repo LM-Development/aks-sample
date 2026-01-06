@@ -1,4 +1,4 @@
-name: "Recording Bot CodeQL"
+name: "Scan - CodeQL"
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
       - main
       - master
   schedule:
-    - cron: "24 5 * * 5"
+    - cron: "0 0 * * 1" # Every Monday at 00:00 UTC
 
 jobs:
   analyze:

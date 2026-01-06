@@ -1,4 +1,4 @@
-name: Recording Bot Pull Request CI
+name: Continuous Integration
 run-name: Pull Request "${{github.event.pull_request.title}}" - Complete CI Pipeline
 
 on:
@@ -138,7 +138,7 @@ jobs:
         needs.check-recording-bot-changes.outputs.scripts == 'True' || 
         needs.check-recording-bot-changes.outputs.src == 'True'
       )
-    uses: ./.github/workflows/publicrecordingbot_manage-cluster.yml
+    uses: ./.github/workflows/routine-managecluster.yml
     with:
       action: 'start'
       cluster-name: ${{ vars.AKS_CLUSTER_NAME }}
@@ -156,7 +156,7 @@ jobs:
         needs.check-recording-bot-changes.outputs.src == 'True' ||
         needs.check-recording-bot-changes.outputs.scripts == 'True'
       )
-    uses: ./.github/workflows/publicrecordingbot_docker-build.yml
+    uses: ./.github/workflows/routine-buildimage.yml
     permissions:
       packages: write
     with:
@@ -171,7 +171,7 @@ jobs:
         needs.build-docker-image.result == 'success' ||
         needs.check-recording-bot-changes.outputs.deploy == 'True'
       )
-    uses: ./.github/workflows/publicrecordingbot_deploy-environment.yml
+    uses: ./.github/workflows/routine-deployenvironment.yml
     with:
       environment-name: aks-sample
       port: '28550'
@@ -193,7 +193,7 @@ jobs:
   run-tests:
     needs: [check-recording-bot-changes, chart-version-checks, start-cluster, build-docker-image, deploy-to-test-environment]
     if: needs.deploy-to-test-environment.result == 'success'
-    uses: ./.github/workflows/publicrecordingbot_dotnet-test.yml
+    uses: ./.github/workflows/routine-runtests.yml
     with:
       headless-mode: true
       test-environment: pr-${{ github.event.number }}

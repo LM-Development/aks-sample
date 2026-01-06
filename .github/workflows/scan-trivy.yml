@@ -1,8 +1,8 @@
-name: Docker Image Scan
+name: Scan - Trivy
 
 on:
   schedule:
-    - cron: '0 0 * * 1'  # Jeden Montag um 00:00 Uhr
+    - cron: '0 0 * * 1'  # Mondays at 00:00 UTC
   workflow_dispatch:
   push:
     branches:
