@@ -1,4 +1,4 @@
-name: Scheduled AKS Cluster Stop
+name: Cluster - Auto-Stop
 
 # Stop the AKS cluster every day at midnight UTC to save costs
 on:
@@ -45,7 +45,7 @@ jobs:
   stop-cluster:
     name: Stop AKS Cluster
     needs: print-info
-    uses: ./.github/workflows/publicrecordingbot_manage-cluster.yml
+    uses: ./.github/workflows/routine-managecluster.yml
     with:
       action: 'stop'
       cluster-name: ${{ vars.AKS_CLUSTER_NAME }}

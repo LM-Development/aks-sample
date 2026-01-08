@@ -1,4 +1,4 @@
-name: Deploy Teams Recording Bot
+name: Routine - Deploy Environment
 
 on:
   workflow_call:

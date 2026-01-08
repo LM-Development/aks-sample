@@ -1,4 +1,4 @@
-name: Manage AKS Cluster
+name: Routine - Manage Cluster
 
 # Triggered by other workflows
 on:

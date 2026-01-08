@@ -1,4 +1,4 @@
-name: Recording Bot Test
+name: Routine - Run Tests
 
 on: 
   workflow_call:

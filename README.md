@@ -1,8 +1,5 @@
-> [!NOTE]  
-> Public Samples are provided by developers from the Microsoft Graph community.  
-> Public Samples are not official Microsoft Communication samples, and not supported by the Microsoft Communication engineering team. It is recommended that you contact the sample owner before using code from Public Samples in production systems.
-
----
+# AKS-Sample
+[![Continuous Integration](https://github.com/LM-Development/aks-sample/actions/workflows/continuous-integration.yml/badge.svg?branch=main)](https://github.com/LM-Development/aks-sample/actions/workflows/continuous-integration.yml)
 
 **Title:**  
 RecordingBot

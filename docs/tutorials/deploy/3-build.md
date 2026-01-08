@@ -34,12 +34,6 @@ Resolving deltas: 100% (8606/8606), done.
 Updating files: 100% (1289/1289), done.
 ```
 
-Now we navigate to the aks sample in the repository we just downloaded.
-
-```powershell
-cd .\aks-sample\Samples\PublicSamples\RecordingBot\
-```
-
 ## Build the application
 
 To build the application we will push the dockerfile and the source code of the AKS sample to our
